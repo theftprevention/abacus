@@ -1,10 +1,12 @@
 import type { UrlString } from '../../core/types';
 import type { CrawlContext } from '../types';
 
-import { DynamoDB, S3 } from 'aws-sdk';
+import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { env } from '../../core/helpers/env';
 import { envInteger } from '../../core/helpers/envInteger';
-import { dynamodbPaginatedRequest } from '../../core/helpers/dynamodbPaginatedRequest';
+import { dynamoDBPaginatedRequest } from '../../core/helpers/dynamoDBPaginatedRequest';
+import { toUrlStringOrNull } from '../../core/helpers/toUrlStringOrNull';
 import { getHistoryEntry, putHistoryEntry } from '../lib/historyTable';
 import { UrlStatus } from '../lib/urlTable';
 
@@ -13,8 +15,8 @@ const S3_BUCKET = env('S3_BUCKET');
 const S3_QUEUED_URLS_KEY = env('S3_QUEUED_URLS_KEY');
 const STATE_MACHINE_URL_THRESHOLD = envInteger('STATE_MACHINE_URL_THRESHOLD');
 
-const ddbDocumentClient = new DynamoDB.DocumentClient();
-const s3Service = new S3();
+const dynamoDBClient = new DynamoDBClient();
+const s3Client = new S3Client();
 
 export async function enqueueUrls(context: CrawlContext) {
   const historyEntry = await getHistoryEntry(context.crawlId);
@@ -24,15 +26,15 @@ export async function enqueueUrls(context: CrawlContext) {
   } = historyEntry;
 
   // Get next batch of URLS to visit
-  const query = ddbDocumentClient.query.bind(ddbDocumentClient);
-  const urls: UrlString[] = (await dynamodbPaginatedRequest(
-    query,
+  const items = (await dynamoDBPaginatedRequest(
+    dynamoDBClient,
+    QueryCommand,
     {
       TableName: context.urlTableName,
       ConsistentRead: true,
       KeyConditionExpression: '#status = :status',
       ExpressionAttributeValues: {
-        ':status': UrlStatus.PENDING,
+        ':status': { N: `${UrlStatus.PENDING}` },
       },
       ExpressionAttributeNames: {
         '#status': 'status',
@@ -40,7 +42,17 @@ export async function enqueueUrls(context: CrawlContext) {
       Limit: 50,
     },
     MAX_CONCURRENT_URLS
-  )).map((entry) => entry.url);
+  ));
+
+  let index = 0;
+  let url: UrlString | null;
+  const urls: UrlString[] = [];
+  for (const item of items) {
+    url = toUrlStringOrNull(item?.url?.S);
+    if (url) {
+      urls[index++] = url;
+    }
+  }
 
   const queuedUrlCount = urls.length;
   const batchUrlCount = previousBatchUrlCount + queuedUrlCount;
@@ -55,11 +67,11 @@ export async function enqueueUrls(context: CrawlContext) {
 
   // Save the URLs to S3 to avoid hitting the max request size limit of 256KB.
   const { urlTableName } = context;
-  await s3Service.putObject({
+  await s3Client.send(new PutObjectCommand({
     Bucket: S3_BUCKET,
     Key: S3_QUEUED_URLS_KEY,
     Body: JSON.stringify(urls.map((url) => ({ url, urlTableName }))),
-  }).promise();
+  }));
 
   return {
     queueIsNonEmpty: urls.length > 0,

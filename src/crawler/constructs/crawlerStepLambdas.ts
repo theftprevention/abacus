@@ -54,7 +54,7 @@ export class CrawlerStepLambdas extends Construct {
       handler,
       layers: [jsdomLayer],
       bundling: {
-        externalModules: ['aws-sdk', 'jsdom'],
+        externalModules: ['@aws-sdk/*', 'jsdom'],
       },
     });
 
@@ -73,7 +73,7 @@ export class CrawlerStepLambdas extends Construct {
     const getProductGroup = lambda('GetProductGroupLambda', 'getProductGroupHandler');
     productTable.grantReadWriteData(getProductGroup);
     getProductGroup.addToRolePolicy(props.createUrlTablePolicy(['PutItem', 'GetItem', 'DeleteItem']));
-    
+
     // Lambda for cleaning up when crawling has finished
     const stopCrawl = lambda('StopCrawlLambda', 'stopCrawlHandler');
     historyTable.grantReadWriteData(stopCrawl);

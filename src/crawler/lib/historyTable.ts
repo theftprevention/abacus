@@ -1,28 +1,43 @@
+import type { AttributeValue } from '@aws-sdk/client-dynamodb';
 import type { HistoryEntry } from '../types';
 
-import { DynamoDB } from 'aws-sdk';
+import { DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { dynamoDBItemToObject } from '../../core/helpers/dynamoDBItemToObject';
 import { env } from '../../core/helpers/env';
 
 const HISTORY_TABLE_NAME = env('HISTORY_TABLE_NAME');
-const ddbDocumentClient = new DynamoDB.DocumentClient();
+
+const client = new DynamoDBClient();
 
 export async function getHistoryEntry(crawlId: string): Promise<HistoryEntry> {
-  const entry = (await ddbDocumentClient.get({
-    TableName: HISTORY_TABLE_NAME,
-    Key: { crawlId },
+  const item = (await client.send(new GetItemCommand({
     ConsistentRead: true,
-  }).promise()).Item as HistoryEntry | undefined;
-  if (!entry) {
+    Key: {
+      crawlId: { S: crawlId, },
+    },
+    TableName: HISTORY_TABLE_NAME,
+  }))).Item;
+  if (!item) {
     throw new Error(`No history entry found with crawlId "${crawlId}"`);
   }
-  return entry;
+  return dynamoDBItemToObject<HistoryEntry>(item);
 }
 
 export async function putHistoryEntry(historyEntry: HistoryEntry): Promise<void> {
-  await ddbDocumentClient.put({
+  const item: Record<string, AttributeValue> = {
+    batchUrlCount: { N: `${historyEntry.batchUrlCount}` },
+    startTimestamp: { N: `${historyEntry.startTimestamp}` },
+    stateMachineArn: { S: historyEntry.stateMachineArn },
+    urlCount: { N: `${historyEntry.urlCount}` },
+  };
+  const { endTimestamp } = historyEntry;
+  if (endTimestamp) {
+    item.endTimestamp = { N: `${endTimestamp}` };
+  }
+  await client.send(new PutItemCommand({
+    Item: item,
     TableName: HISTORY_TABLE_NAME,
-    Item: historyEntry,
-  }).promise();
+  }));
 }
 
 export async function updateHistoryEntry(

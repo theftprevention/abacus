@@ -31,7 +31,7 @@ export class CrawlerStack extends Stack {
     // Dynamodb table to store products
     const productTable = new Table(this, `${CONSTRUCT_NAME_PREFIX}CrawlerProductTable`, {
       partitionKey: {
-        name: 'productId',
+        name: 'id',
         type: AttributeType.STRING,
       },
     });

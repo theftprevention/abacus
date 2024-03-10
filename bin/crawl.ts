@@ -1,33 +1,36 @@
-import type { AWSError, Request } from 'aws-sdk';
-
-import { CloudFormation, Lambda } from 'aws-sdk';
+import { CloudFormationClient, ListExportsCommand } from '@aws-sdk/client-cloudformation';
+import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { awsPaginatedRequest } from '../src/core/helpers/awsPaginatedRequest';
 
 process.env.AWS_SDK_LOAD_CONFIG = 'true';
 
-const cloudFormationService = new CloudFormation();
-const lambdaService = new Lambda();
+const lambdaClient = new LambdaClient();
 
 (async () => {
   // List all cloudformation exports
-  const listExports = cloudFormationService.listExports.bind(cloudFormationService) as {
-    (params: CloudFormation.ListExportsInput): Request<CloudFormation.ListExportsOutput, AWSError>;
-  };
-  const cfnExports = await awsPaginatedRequest(listExports, {}, 'Exports', 'NextToken', 'NextToken');
+  const cfnExports = await awsPaginatedRequest(
+    CloudFormationClient,
+    ListExportsCommand,
+    null,
+    'Exports',
+    'NextToken'
+  );
 
   // Find the arn of the lambda function to start a crawl
   const beginCrawlFunctionArn = cfnExports.find((exp) => exp.Name === 'BeginCrawlFunctionArn')?.Value;
 
   if (beginCrawlFunctionArn) {
-    const response = await lambdaService.invoke({
+    const command = new InvokeCommand({
       FunctionName: beginCrawlFunctionArn,
       InvocationType: 'RequestResponse',
-    }).promise();
+    });
+    const response = await lambdaClient.send(command);
+    const payload = response?.Payload;
 
     console.log('beginCrawl response', response);
 
-    if (response.Payload) {
-      const { stateMachineExecutionArn } = JSON.parse(response.Payload as string);
+    if (payload) {
+      const { stateMachineExecutionArn } = JSON.parse(payload.transformToString());
       const region = stateMachineExecutionArn.split(':')[3];
       const stateMachineConsoleUrl = `https://${region}.console.aws.amazon.com/states/home?region=${region}#/executions/details/${stateMachineExecutionArn}`;
       console.log('---');

@@ -1,88 +1,106 @@
-import type { AWSError, Request } from 'aws-sdk';
-import type { ArrayElement, ArrayKey } from '../types';
+import type { Client as IClient, Command, MetadataBearer } from '@smithy/types';
+import type { ArrayElement, ArrayKey, KeyByValueType } from '../types';
 
 import { toNonNegativeIntegerOrNull } from './toNonNegativeIntegerOrNull';
 
 export async function awsPaginatedRequest<
-  Input extends object,
-  Output extends object,
-  ResultListKey extends ArrayKey<Output>,
-  NextTokenKey extends (keyof Input) & (keyof Output)
+  ClientInput extends object,
+  ClientOutput extends MetadataBearer,
+  ResolvedClientConfiguration,
+  Input extends ClientInput,
+  Output extends ClientOutput,
+  ResultListKey extends ArrayKey<Output>
 >(
-  boundApiMethod: BoundApiMethod<Input, Output>,
-  input: Input,
+  client: IClient<ClientInput, ClientOutput, ResolvedClientConfiguration> | (new () => IClient<ClientInput, ClientOutput, ResolvedClientConfiguration>),
+  command: new (input: Input) => Command<ClientInput, Input, ClientOutput, Output, ResolvedClientConfiguration>,
+  inputTemplate: Input | ({} extends Input ? null | undefined : never),
   resultListKey: ResultListKey,
-  nextTokenKey: NextTokenKey
+  nextTokenKey: {
+    [K in (keyof Input) & (keyof Output)]: Input[K] extends Output[K]
+      ? Output[K] extends Input[K]
+        ? K
+        : never
+      : never;
+  }[(keyof Input) & (keyof Output)],
+  nextTokenOutputKey?: null,
+  limit?: number | null
 ): Promise<ArrayElement<Output[ResultListKey]>[]>;
 export async function awsPaginatedRequest<
-  Input extends object,
-  Output extends object,
+  ClientInput extends object,
+  ClientOutput extends MetadataBearer,
+  ResolvedClientConfiguration,
+  Input extends ClientInput,
+  Output extends ClientOutput,
   ResultListKey extends ArrayKey<Output>,
-  NextTokenOutputKey extends keyof Output,
   NextTokenInputKey extends keyof Input
 >(
-  boundApiMethod: BoundApiMethod<Input, Output>,
-  input: Input,
+  client: IClient<ClientInput, ClientOutput, ResolvedClientConfiguration> | (new () => IClient<ClientInput, ClientOutput, ResolvedClientConfiguration>),
+  command: new (input: Input) => Command<ClientInput, Input, ClientOutput, Output, ResolvedClientConfiguration>,
+  inputTemplate: Input | ({} extends Input ? null | undefined : never),
   resultListKey: ResultListKey,
-  nextTokenOutputKey: NextTokenOutputKey,
   nextTokenInputKey: NextTokenInputKey,
-  limit?: number
+  nextTokenOutputKey: KeyByValueType<Output, Input[NextTokenInputKey]>,
+  limit?: number | null
 ): Promise<ArrayElement<Output[ResultListKey]>[]>;
 export async function awsPaginatedRequest<
-  Input extends object,
-  Output extends object,
+  ClientInput extends object,
+  ClientOutput extends MetadataBearer,
+  ResolvedClientConfiguration,
+  Input extends ClientInput,
+  Output extends ClientOutput,
   ResultListKey extends ArrayKey<Output>,
-  NextTokenOutputKey extends keyof Output,
-  NextTokenInputKey extends keyof Input
+  NextTokenInputKey extends keyof Input,
+  NextTokenOutputKey extends KeyByValueType<Output, Input[NextTokenInputKey]>
 >(
-  boundApiMethod: BoundApiMethod<Input, Output>,
-  input: Input,
+  client: IClient<ClientInput, ClientOutput, ResolvedClientConfiguration> | (new () => IClient<ClientInput, ClientOutput, ResolvedClientConfiguration>),
+  command: new (input: Input) => Command<ClientInput, Input, ClientOutput, Output, ResolvedClientConfiguration>,
+  inputTemplate: Input | ({} extends Input ? null | undefined : never),
   resultListKey: ResultListKey,
-  nextTokenOutputKey: NextTokenOutputKey,
-  nextTokenInputKey?: NextTokenInputKey,
-  limit?: number
+  nextTokenInputKey: NextTokenInputKey,
+  nextTokenOutputKey?: NextTokenOutputKey | null,
+  limit?: number | null
 ): Promise<ArrayElement<Output[ResultListKey]>[]> {
   type Result = ArrayElement<Output[ResultListKey]>;
+  type Token = Input[NextTokenInputKey];
 
-  let page: Result[] | null;
-  let response: Output;
-  let resultsCount: number;
-  let token: Output[NextTokenOutputKey] | undefined;
+  const input: Input = { ...inputTemplate } as Input;
   const results: Result[] = [];
+  let output: Output;
+  let page: readonly Result[] | null | undefined;
+  let resultsCount: number;
+  let token: Token | undefined;
 
+  if (typeof client === 'function') {
+    client = new client();
+  }
   limit = toNonNegativeIntegerOrNull(limit) || Number.POSITIVE_INFINITY;
-  if (!nextTokenInputKey) {
-    nextTokenInputKey = nextTokenOutputKey as any as NextTokenInputKey;
+  if (!nextTokenOutputKey) {
+    nextTokenOutputKey = nextTokenInputKey as any as NextTokenOutputKey;
   }
 
   do {
-    response = await boundApiMethod({
-      ...input,
-      [nextTokenInputKey]: token,
-    }).promise();
-    page = toArray(response[resultListKey]);
-    token = response[nextTokenOutputKey];
-    if (!page || !page.length) {
-      continue;
+    if (token) {
+      input[nextTokenInputKey] = token;
     }
-    results.push(...page);
-    resultsCount = results.length;
-    if (resultsCount === limit) {
-      break;
-    }
-    if (resultsCount > limit) {
-      results.splice(limit);
-      break;
+    output = await client.send(new command(input));
+    page = toArray(output[resultListKey]);
+    token = output[nextTokenOutputKey] as Token | undefined;
+    if (page && page.length) {
+      results.push(...page);
+      resultsCount = results.length;
+      if (resultsCount === limit) {
+        break;
+      }
+      if (resultsCount > limit) {
+        results.splice(limit);
+        break;
+      }
     }
   } while (token);
-  
+
   return results;
 }
 
-function toArray<T>(value: unknown): T[] | null {
+function toArray<T>(value: unknown): readonly T[] | null {
   return Array.isArray(value) ? (value as T[]) : null;
-}
-
-interface BoundApiMethod<in Input extends object, out Output extends object> {
-  (input: Input, callback?: (error: AWSError, data: Output) => void): Request<Output, any>;
 }
