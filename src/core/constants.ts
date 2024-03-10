@@ -1,5 +1,5 @@
 export const CONSTRUCT_NAME_PREFIX = 'Abacus';
-export const CRAWLER_STATE_MACHINE_NAME = 'webcrawler-state-machine';
+export const CRAWLER_STATE_MACHINE_NAME = 'abacus-crawler-state-machine';
 
 /**
  * The default concurrency limit for the Distributed Map state's child executions
