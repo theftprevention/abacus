@@ -81,16 +81,26 @@ export async function markUrlAsVisited(url: URL | UrlString, urlTableName: strin
 }
 
 export async function storeUrls(urls: readonly UrlString[], urlTableName: string): Promise<void> {
-  await client.send(new BatchWriteItemCommand({
-    RequestItems: {
-      [urlTableName]: urls.map((url) => ({
-        PutRequest: {
-          Item: {
-            url: { S: url },
-            status: { N: `${UrlStatus.PENDING}` },
-          },
+  let batch: UrlString[];
+  let batchSize: number;
+  let index = 0;
+  const promises: Promise<any>[] = [];
+  while ((batchSize = (batch = urls.slice(index, index + 25)).length)) {
+    index += batchSize;
+    promises.push(
+      client.send(new BatchWriteItemCommand({
+        RequestItems: {
+          [urlTableName]: batch.map((url) => ({
+            PutRequest: {
+              Item: {
+                url: { S: url },
+                status: { N: `${UrlStatus.PENDING}` },
+              },
+            },
+          })),
         },
-      })),
-    },
-  }));
+      }))
+    );
+  }
+  await Promise.all(promises);
 }
