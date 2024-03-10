@@ -31,6 +31,7 @@ import {
   S3_QUEUED_URLS_KEY,
   STATE_MACHINE_URL_THRESHOLD,
   URL_TABLE_NAME_PREFIX,
+  URL_TABLE_STATUS_INDEX_NAME,
   VIRGINIA_ABC_ORIGIN,
 } from '../../core/constants';
 
@@ -97,10 +98,11 @@ export class CrawlerStack extends Stack {
           MAX_CONCURRENT_URLS: String(MAX_CONCURRENT_URLS),
           PRODUCT_TABLE_NAME: productTable.tableName,
           S3_BUCKET: bucket.bucketName,
-          S3_QUEUED_URLS_KEY: S3_QUEUED_URLS_KEY,
+          S3_QUEUED_URLS_KEY,
           STATE_MACHINE_URL_THRESHOLD: String(STATE_MACHINE_URL_THRESHOLD),
           TARGET_ORIGIN: VIRGINIA_ABC_ORIGIN,
-          URL_TABLE_NAME_PREFIX: URL_TABLE_NAME_PREFIX,
+          URL_TABLE_NAME_PREFIX,
+          URL_TABLE_STATUS_INDEX_NAME,
         },
         layers: [jsdomLayer, uuidLayer],
         memorySize: 512,

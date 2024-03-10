@@ -30,6 +30,7 @@ export async function beginCrawlHandler(options?: Partial<CrawlOptions> | null) 
     stateMachineArn: toString(options.stateMachineArn) || env('CRAWLER_STATE_MACHINE_ARN'),
     targetOrigin: toUrlStringOrNull(options.targetOrigin) || toUrlString(env('TARGET_ORIGIN')),
     urlTableName,
+    urlTableStatusIndexName: toString(options.urlTableStatusIndexName) || env('URL_TABLE_STATUS_INDEX_NAME'),
   });
 }
 

@@ -34,6 +34,7 @@ export const S3_QUEUED_URLS_KEY = 'temp-crawler-urls/queuedUrls.json';
 export const STATE_MACHINE_URL_THRESHOLD = 10000;
 
 export const URL_TABLE_NAME_PREFIX = 'crawler-urls';
+export const URL_TABLE_STATUS_INDEX_NAME = 'StatusIndex';
 
 export const VIRGINIA_ABC_HOST = 'www.abc.virginia.gov';
 export const VIRGINIA_ABC_ORIGIN = `https://${VIRGINIA_ABC_HOST}`;

@@ -3,9 +3,9 @@ import type { CrawlContext } from '../types';
 
 import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { dynamoDBPaginatedRequest } from '../../core/helpers/dynamoDBPaginatedRequest';
 import { env } from '../../core/helpers/env';
 import { envInteger } from '../../core/helpers/envInteger';
-import { dynamoDBPaginatedRequest } from '../../core/helpers/dynamoDBPaginatedRequest';
 import { toUrlStringOrNull } from '../../core/helpers/toUrlStringOrNull';
 import { getHistoryEntry, putHistoryEntry } from '../lib/historyTable';
 import { UrlStatus } from '../lib/urlTable';
@@ -31,6 +31,7 @@ export async function enqueueUrls(context: CrawlContext) {
     QueryCommand,
     {
       TableName: context.urlTableName,
+      IndexName: context.urlTableStatusIndexName,
       ConsistentRead: true,
       KeyConditionExpression: '#status = :status',
       ExpressionAttributeValues: {

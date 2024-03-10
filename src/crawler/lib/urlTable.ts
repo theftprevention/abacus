@@ -9,6 +9,7 @@ import {
   DeleteTableCommand,
   DynamoDBClient,
   KeyType,
+  ProjectionType,
   PutItemCommand,
   ScalarAttributeType,
   waitUntilTableExists,
@@ -22,7 +23,7 @@ export const enum UrlStatus {
   ERROR,
 }
 
-export async function createUrlTable(tableName: string): Promise<void> {
+export async function createUrlTable(tableName: string, statusIndexName: string): Promise<void> {
   await client.send(new CreateTableCommand({
     TableName: tableName,
     AttributeDefinitions: [
@@ -46,6 +47,18 @@ export async function createUrlTable(tableName: string): Promise<void> {
       }
     ],
     BillingMode: BillingMode.PAY_PER_REQUEST,
+    GlobalSecondaryIndexes: [{
+      IndexName: statusIndexName,
+      KeySchema: [
+        {
+          AttributeName: 'status',
+          KeyType: KeyType.HASH,
+        },
+      ],
+      Projection: {
+        ProjectionType: ProjectionType.KEYS_ONLY,
+      },
+    }],
   }));
 
   await waitUntilTableExists({ client, maxWaitTime: 20, minDelay: 10 }, { TableName: tableName });
