@@ -7,9 +7,9 @@ import type { CrawlerSteps, HandlerName } from '../types';
 import { Construct } from 'constructs';
 import { CfnOutput } from 'aws-cdk-lib';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { LayerVersion, Code } from 'aws-cdk-lib/aws-lambda';
 import { MAX_CONCURRENT_URLS, STATE_MACHINE_URL_THRESHOLD } from '../../core/constants';
 import { CrawlerLambda } from './crawlerLambda';
-import { JsdomLambdaLayer } from './jsdomLambdaLayer';
 
 export interface CrawlerStepLambdasProps {
   bucket: Bucket;
@@ -42,7 +42,13 @@ export class CrawlerStepLambdas extends Construct {
       URL_TABLE_NAME_PREFIX: props.urlTableNamePrefix,
     };
 
-    const jsdomLayer = new JsdomLambdaLayer(this, 'JsdomLayer');
+    const jsdomLayer = new LayerVersion(this, 'JsdomLayer', {
+      code: Code.fromAsset('bin/layers/jsdom'),
+    });
+
+    const uuidLayer = new LayerVersion(this, 'UuidLayer', {
+      code: Code.fromAsset('bin/layers/uuid'),
+    });
 
     const lambda = (
       id: string,
@@ -52,9 +58,9 @@ export class CrawlerStepLambdas extends Construct {
       ...props,
       environment,
       handler,
-      layers: [jsdomLayer],
+      layers: [jsdomLayer, uuidLayer],
       bundling: {
-        externalModules: ['@aws-sdk/*', 'jsdom'],
+        externalModules: ['@aws-sdk/*', 'jsdom', 'uuid'],
       },
     });
 
