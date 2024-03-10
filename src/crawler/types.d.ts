@@ -1,5 +1,4 @@
 import type { UrlString } from '../core/types';
-import type { CrawlerLambda } from './constructs/crawlerLambda';
 import type * as handlers from './index';
 
 export interface CrawlContext extends Omit<CrawlOptions, 'urlTableNamePrefix'> {
@@ -13,10 +12,6 @@ export interface CrawlOptions {
   readonly targetOrigin: UrlString;
   readonly urlTableNamePrefix: string;
 }
-
-export type CrawlerSteps = {
-  [K in StepName]: CrawlerLambda;
-};
 
 export type HandlerName = {
   [K in keyof typeof handlers]: (typeof handlers)[K] extends Function ? K : never;
