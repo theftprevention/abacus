@@ -26,9 +26,13 @@ export async function getHistoryEntry(crawlId: string): Promise<HistoryEntry> {
 export async function putHistoryEntry(historyEntry: HistoryEntry): Promise<void> {
   const item: Record<string, AttributeValue> = {
     batchUrlCount: { N: `${historyEntry.batchUrlCount}` },
+    crawlId: { S: historyEntry.crawlId, },
+    crawlName: { S: historyEntry.crawlName, },
     startTimestamp: { N: `${historyEntry.startTimestamp}` },
     stateMachineArn: { S: historyEntry.stateMachineArn },
+    targetOrigin: { S: historyEntry.targetOrigin },
     urlCount: { N: `${historyEntry.urlCount}` },
+    urlTableName: { S: historyEntry.urlTableName },
   };
   const { endTimestamp } = historyEntry;
   if (endTimestamp) {
