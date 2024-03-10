@@ -48,7 +48,7 @@ export async function createUrlTable(tableName: string): Promise<void> {
     BillingMode: BillingMode.PAY_PER_REQUEST,
   }));
 
-  await waitUntilTableExists({ client, maxWaitTime: 10 }, { TableName: tableName });
+  await waitUntilTableExists({ client, maxWaitTime: 20, minDelay: 10 }, { TableName: tableName });
 }
 
 export async function deleteUrlTable(context: CrawlContext): Promise<void> {
