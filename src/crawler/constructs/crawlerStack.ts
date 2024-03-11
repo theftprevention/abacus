@@ -207,7 +207,8 @@ export class CrawlerStack extends Stack {
       stateMachineName: CRAWLER_STATE_MACHINE_NAME,
       definitionBody: DefinitionBody.fromChainable(
         // Enqueue URLs from the database
-        enqueueUrls.addCatch(enqueueUrls).next(
+        // enqueueUrls.addCatch(enqueueUrls).next(
+        enqueueUrls.next(
           // Check if we have urls still to visit
           new Choice(this, 'QueueContainsUrls?')
             .when(
