@@ -32,7 +32,6 @@ export async function enqueueUrls(context: CrawlContext) {
     {
       TableName: context.urlTableName,
       IndexName: context.urlTableStatusIndexName,
-      ConsistentRead: true,
       KeyConditionExpression: '#status = :status',
       ExpressionAttributeValues: {
         ':status': { N: `${UrlStatus.PENDING}` },
