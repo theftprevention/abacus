@@ -61,7 +61,7 @@ export async function createUrlTable(tableName: string, statusIndexName: string)
     }],
   }));
 
-  await waitUntilTableExists({ client, maxWaitTime: 20, minDelay: 10 }, { TableName: tableName });
+  await waitUntilTableExists({ client, maxWaitTime: 30, minDelay: 20 }, { TableName: tableName });
 }
 
 export async function deleteUrlTable(context: CrawlContext): Promise<void> {
