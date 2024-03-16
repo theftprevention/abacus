@@ -22,7 +22,7 @@ export class HttpResponseError extends Error {
   }
 
   #statusCode: HttpResponseStatusCode | null = null;
-  get satusCode(): HttpResponseStatusCode | null {
+  get statusCode(): HttpResponseStatusCode | null {
     return this.#statusCode;
   }
   set statusCode(value: unknown) {
