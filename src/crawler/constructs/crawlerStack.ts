@@ -137,6 +137,11 @@ export class CrawlerStack extends Stack {
     productTable.grantReadWriteData(getProductGroupLambda);
     getProductGroupLambda.addToRolePolicy(createUrlTablePolicy(['PutItem', 'GetItem', 'DeleteItem']));
 
+    // const getProductGroupAlias = getProductGroupLambda.addAlias('Provisioned', {
+    //   description: 'An alias of the "getProductGroup" lambda with provisioned concurrency.',
+    //   provisionedConcurrentExecutions: MAX_CONCURRENT_URLS,
+    // });
+
     // When we've reached a certain queue size, we restart the step function execution so as not to breach the
     // execution history limit of 25000 steps
     const nextExecutionLambda = lambda('NextExecutionLambda', 'nextExecutionHandler');
@@ -165,6 +170,7 @@ export class CrawlerStack extends Stack {
     });
     const getProductGroup = new LambdaInvoke(this, 'GetProductGroup', {
       lambdaFunction: getProductGroupLambda,
+      // lambdaFunction: getProductGroupAlias,
     });
     const nextExecution = new LambdaInvoke(this, 'NextExecution', {
       lambdaFunction: nextExecutionLambda,
@@ -255,6 +261,7 @@ export class CrawlerStack extends Stack {
       effect: Effect.ALLOW,
       actions: ["lambda:InvokeFunction"],
       resources: [getProductGroupLambda.functionArn],
+      // resources: [getProductGroupLambda.functionArn, getProductGroupAlias.functionArn],
     }));
   }
 }
