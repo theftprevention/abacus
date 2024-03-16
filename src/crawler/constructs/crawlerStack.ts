@@ -174,9 +174,11 @@ export class CrawlerStack extends Stack {
     });
     const nextExecution = new LambdaInvoke(this, 'NextExecution', {
       lambdaFunction: nextExecutionLambda,
+      payload: TaskInput.fromJsonPathAt('$$.Execution.Input'),
     });
     const stopCrawl = new LambdaInvoke(this, 'StopCrawl', {
       lambdaFunction: stopCrawlLambda,
+      payload: TaskInput.fromJsonPathAt('$$.Execution.Input'),
     });
 
     const distributedMap = new DistributedMap(
