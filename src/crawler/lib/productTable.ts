@@ -74,7 +74,6 @@ export async function saveProductGroup(productGroup: ProductGroup): Promise<void
             ...boolean('directShip', product),
             ...boolean('enableNonWarehouseOloQuantityMaxLessInventory', product),
             ...string('fact', product),
-            ...stringSet('flavors', product),
             ...boolean('hasWarehouseInventory', product),
             ...boolean('hideAddToCart', product),
             ...boolean('hideInventory', product),

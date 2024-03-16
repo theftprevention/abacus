@@ -122,16 +122,6 @@ export class Product {
   }
   //#endregion
 
-  //#region flavors
-  #flavors: readonly string[] = Object.freeze([]);
-  get flavors(): readonly string[] {
-    return this.#flavors;
-  }
-  set flavors(value: unknown) {
-    this.#flavors = toStringArray(value);
-  }
-  //#endregion
-
   //#region hasWarehouseInventory
   #hasWarehouseInventory: boolean = false;
   get hasWarehouseInventory(): boolean {
