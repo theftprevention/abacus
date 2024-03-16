@@ -13,8 +13,8 @@ import { toUrlStringOrNull } from '../helpers/toUrlStringOrNull';
 export class Product {
   constructor(properties?: ProductProperties | null) {
     if (properties && typeof properties === 'object') {
-      for (const key of Reflect.ownKeys(properties) as ProductPropertyKey[]) {
-        if (productPropertyKeys.has(key)) {
+      for (const key of productPropertyKeys) {
+        if (key in properties) {
           this[key] = properties[key];
         }
       }
