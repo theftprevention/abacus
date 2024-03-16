@@ -33,7 +33,6 @@ export async function putHistoryEntry(historyEntry: HistoryEntry): Promise<void>
     targetOrigin: { S: historyEntry.targetOrigin },
     urlCount: { N: `${historyEntry.urlCount}` },
     urlTableName: { S: historyEntry.urlTableName },
-    urlTableStatusIndexName: { S: historyEntry.urlTableStatusIndexName },
   };
   const { endTimestamp } = historyEntry;
   if (endTimestamp) {

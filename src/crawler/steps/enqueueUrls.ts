@@ -31,7 +31,6 @@ export async function enqueueUrls(context: CrawlContext) {
     QueryCommand,
     {
       TableName: context.urlTableName,
-      IndexName: context.urlTableStatusIndexName,
       KeyConditionExpression: '#status = :status',
       ExpressionAttributeValues: {
         ':status': { N: `${UrlStatus.PENDING}` },
@@ -39,6 +38,7 @@ export async function enqueueUrls(context: CrawlContext) {
       ExpressionAttributeNames: {
         '#status': 'status',
       },
+      ConsistentRead: true,
       Limit: 50,
     },
     MAX_CONCURRENT_URLS

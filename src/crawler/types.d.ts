@@ -11,7 +11,6 @@ export interface CrawlOptions {
   readonly stateMachineArn: string;
   readonly targetOrigin: UrlString;
   readonly urlTableNamePrefix: string;
-  readonly urlTableStatusIndexName: string;
 }
 
 export type HandlerName = {

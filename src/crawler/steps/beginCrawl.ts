@@ -11,7 +11,7 @@ const sfnClient = new SFNClient();
 export async function beginCrawl(context: CrawlContext) {
   const { urlTableName } = context;
 
-  await createUrlTable(urlTableName, context.urlTableStatusIndexName);
+  await createUrlTable(urlTableName);
 
   const startTimestamp = Date.now();
 
