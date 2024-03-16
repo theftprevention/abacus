@@ -51,8 +51,11 @@ function string<Key extends KeyByValueType<Product, string | null>>(
 function stringSet<Key extends KeyByValueType<Product, readonly string[]>>(
   key: Key,
   product: Product
-): { [K in Key]: AttributeValue.SSMember } {
-  return attribute(key, 'SS', product[key].slice());
+): { [K in Key]: AttributeValue.SSMember | AttributeValue.NULLMember } {
+  const values = product[key];
+  return Array.isArray(values) && values.length
+    ? attribute(key, 'SS', values.slice())
+    : NULL(key);
 }
 
 export async function saveProductGroup(productGroup: ProductGroup): Promise<void> {
