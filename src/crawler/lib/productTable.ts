@@ -54,7 +54,7 @@ function stringSet<Key extends KeyByValueType<Product, readonly string[]>>(
 ): { [K in Key]: AttributeValue.SSMember | AttributeValue.NULLMember } {
   const values = product[key];
   return Array.isArray(values) && values.length
-    ? attribute(key, 'SS', values.slice())
+    ? attribute(key, 'SS', Array.from(new Set(values)))
     : NULL(key);
 }
 
