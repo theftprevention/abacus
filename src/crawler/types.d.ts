@@ -10,7 +10,6 @@ export interface CrawlOptions {
   readonly maxAttemptsPerUrl: number;
   readonly maxConcurrentUrls: number;
   readonly maxUrls: number;
-  readonly stateMachineArn: string;
   readonly stateMachineUrlThreshold: number;
   readonly targetOrigin: HttpUrlString;
 }
@@ -26,6 +25,5 @@ export interface HistoryEntry extends CrawlContext {
   batchUrlCount: number;
   endTimestamp?: number;
   startTimestamp: number;
-  stateMachineArn: string;
   urlCount: number;
 }

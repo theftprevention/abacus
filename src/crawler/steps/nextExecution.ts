@@ -1,8 +1,10 @@
 import type { CrawlContext } from '../types';
 
 import { SFNClient, StartExecutionCommand } from '@aws-sdk/client-sfn';
-import { sanitizeTimestamp } from '@abacus/common';
+import { env, sanitizeTimestamp } from '@abacus/common';
 import { updateHistoryEntry } from '../lib/historyTable';
+
+const CRAWLER_STATE_MACHINE_ARN = env('CRAWLER_STATE_MACHINE_ARN');
 
 const sfnClient = new SFNClient();
 
@@ -21,7 +23,7 @@ export async function nextExecution(event: { Payload: { context: CrawlContext } 
   // Start a state machine execution to continue the crawl
   await sfnClient.send(new StartExecutionCommand({
     name: `${context.crawlName}-continued-${sanitizeTimestamp()}`,
-    stateMachineArn: context.stateMachineArn,
+    stateMachineArn: CRAWLER_STATE_MACHINE_ARN,
     input: JSON.stringify({
       Payload: { context },
     }),
