@@ -24,11 +24,15 @@ export async function getHistoryEntry(crawlId: string): Promise<HistoryEntry> {
 }
 
 export async function putHistoryEntry(historyEntry: HistoryEntry): Promise<void> {
-  const item: Record<string, AttributeValue> = {
+  const item: { [K in keyof HistoryEntry]: AttributeValue } = {
     batchUrlCount: { N: `${historyEntry.batchUrlCount}` },
     crawlId: { S: historyEntry.crawlId, },
     crawlName: { S: historyEntry.crawlName, },
+    maxAttemptsPerUrl: { N: `${historyEntry.maxAttemptsPerUrl}` },
+    maxConcurrentUrls: { N: `${historyEntry.maxConcurrentUrls}` },
+    maxUrls: { N: `${historyEntry.maxUrls}` },
     startTimestamp: { N: `${historyEntry.startTimestamp}` },
+    stateMachineUrlThreshold: { N: `${historyEntry.stateMachineUrlThreshold}` },
     targetOrigin: { S: historyEntry.targetOrigin },
     urlCount: { N: `${historyEntry.urlCount}` },
     urlTableName: { S: historyEntry.urlTableName },
