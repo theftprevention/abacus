@@ -27,8 +27,9 @@ export async function getProductGroup(
     }
     let status: number;
     const { statusCode } = error;
-    if (statusCode && statusCode >= 400 && statusCode < 500 && statusCode !== 429) {
-      // Any 4xx status codes (except 429 Too Many Requests) should not result in a retry
+    if (statusCode && statusCode >= 400 && statusCode < 500 && statusCode !== 408 && statusCode !== 429) {
+      // A 4xx status code should not result in a retry unless it's either 408 (Request Timeout) or
+      // 429 (Too Many Requests), both of which can be retried
       status = statusCode;
     } else {
       status = priorAttempts + 1;
