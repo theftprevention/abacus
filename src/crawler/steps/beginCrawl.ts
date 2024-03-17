@@ -46,7 +46,7 @@ export async function beginCrawl(options: CrawlOptions) {
       DISTRIBUTED_MAP_CONCURRENCY_LIMIT
     ),
 
-    maxUrls: toNonNegativeIntegerOrNull(options.maxUrls) || Number.POSITIVE_INFINITY,
+    maxUrls: toNonNegativeIntegerOrNull(options.maxUrls) || Number.MAX_SAFE_INTEGER,
 
     stateMachineUrlThreshold:
       toNonNegativeIntegerOrNull(options.stateMachineUrlThreshold) ||
