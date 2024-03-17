@@ -60,7 +60,7 @@ export const DEFAULT_STATE_MACHINE_URL_THRESHOLD = 10000;
  * The default concurrency limit for the Distributed Map state's child executions
  * 
  * Distributed Map state can support up to 10,000 concurrent executions but we need to consider the
- * default Lambda  concurrency limit of 1,000 per AWS region. To increase the concurrency limit for
+ * default Lambda concurrency limit of 1,000 per AWS region. To increase the concurrency limit for
  * child executions, you can request a quota increase for the Lambda concurrency limit and then
  * update the concurrency limit for the child executions of the Distributed Map state accordingly.
  */
