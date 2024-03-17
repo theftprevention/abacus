@@ -38,15 +38,14 @@ const CRAWLER_STATE_MACHINE_NAME = 'abacus-crawler-state-machine';
 /**
  * The maximum number of times that an attempt can be made to load the product group at a given URL.
  */
-const DEFAULT_MAX_ATTEMPTS_PER_URL = 3;
+export const DEFAULT_MAX_ATTEMPTS_PER_URL = 3;
 
 /**
  * The default number of urls to sync in parallel.
  * 
- * Note that this value must be the same or bigger than the
- * `DEFAULT_DISTRIBUTED_MAP_CONCURRENCY_LIMIT`.
+ * Note that this value must be greater than or equal to `DISTRIBUTED_MAP_CONCURRENCY_LIMIT`.
  */
-const DEFAULT_MAX_CONCURRENT_URLS = 5;
+export const DEFAULT_MAX_CONCURRENT_URLS = 5;
 
 /**
  * The default maximum number of URLs to visit within a single state machine execution.
@@ -55,7 +54,7 @@ const DEFAULT_MAX_CONCURRENT_URLS = 5;
  * work across multiple executions. When the number of visited urls for an execution is greater than
  * this, we launch a new step function execution to continue crawling the website.
  */
-const DEFAULT_STATE_MACHINE_URL_THRESHOLD = 10000;
+export const DEFAULT_STATE_MACHINE_URL_THRESHOLD = 10000;
 
 /**
  * The default concurrency limit for the Distributed Map state's child executions
@@ -65,7 +64,7 @@ const DEFAULT_STATE_MACHINE_URL_THRESHOLD = 10000;
  * child executions, you can request a quota increase for the Lambda concurrency limit and then
  * update the concurrency limit for the child executions of the Distributed Map state accordingly.
  */
-const DISTRIBUTED_MAP_CONCURRENCY_LIMIT = 5;
+export const DISTRIBUTED_MAP_CONCURRENCY_LIMIT = 5;
 
 const LAMBDA_RUNTIME = Runtime.NODEJS_20_X;
 
@@ -82,7 +81,7 @@ const URL_TABLE_NAME_PREFIX = 'crawler-urls';
 /**
  * The origin of the Virginia ABC website.
  */
-const VIRGINIA_ABC_ORIGIN = 'https://www.abc.virginia.gov';
+export const VIRGINIA_ABC_ORIGIN = 'https://www.abc.virginia.gov';
 
 class CrawlerStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
