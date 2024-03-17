@@ -205,7 +205,6 @@ class CrawlerStack extends Stack {
         }
       )
       .itemProcessor(getProductGroup)
-      .addCatch(enqueueUrls)
       .addRetry({
         backoffRate: 2,
         interval: Duration.seconds(2),
