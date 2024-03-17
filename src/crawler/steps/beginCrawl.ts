@@ -16,6 +16,7 @@ import { putHistoryEntry } from '../lib/historyTable';
 import { createUrlTable, storeUrls } from '../lib/urlTable';
 
 const CRAWLER_STATE_MACHINE_ARN = env('CRAWLER_STATE_MACHINE_ARN');
+const DISTRIBUTED_MAP_CONCURRENCY_LIMIT = envInteger('DISTRIBUTED_MAP_CONCURRENCY_LIMIT');
 
 const sfnClient = new SFNClient();
 
@@ -39,9 +40,11 @@ export async function beginCrawl(options: CrawlOptions) {
       toNonNegativeIntegerOrNull(options.maxAttemptsPerUrl) ||
       envInteger('DEFAULT_MAX_ATTEMPTS_PER_URL'),
 
-    maxConcurrentUrls:
+    maxConcurrentUrls: Math.max(
       toNonNegativeIntegerOrNull(options.maxConcurrentUrls) ||
-      envInteger('DEFAULT_MAX_CONCURRENT_URLS'),
+        envInteger('DEFAULT_MAX_CONCURRENT_URLS'),
+      DISTRIBUTED_MAP_CONCURRENCY_LIMIT
+    ),
 
     maxUrls: toNonNegativeIntegerOrNull(options.maxUrls) || Number.POSITIVE_INFINITY,
 

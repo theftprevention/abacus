@@ -151,6 +151,7 @@ class CrawlerStack extends Stack {
           DEFAULT_MAX_ATTEMPTS_PER_URL: String(DEFAULT_MAX_ATTEMPTS_PER_URL),
           DEFAULT_MAX_CONCURRENT_URLS: String(DEFAULT_MAX_CONCURRENT_URLS),
           DEFAULT_TARGET_ORIGIN: VIRGINIA_ABC_ORIGIN,
+          DISTRIBUTED_MAP_CONCURRENCY_LIMIT: String(DISTRIBUTED_MAP_CONCURRENCY_LIMIT),
           HISTORY_TABLE_NAME: historyTable.tableName,
           PRODUCT_TABLE_NAME: productTable.tableName,
           S3_BUCKET: bucket.bucketName,
