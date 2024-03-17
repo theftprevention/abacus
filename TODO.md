@@ -1,2 +1,1 @@
-- Add new `CrawlContext` properties to history table
 - Refactor `crawlId` and `crawlName`; do we really need both? Can we get rid of the `uuid` dependency?
