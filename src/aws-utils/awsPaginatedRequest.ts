@@ -1,8 +1,6 @@
 import type { Client as IClient, Command, MetadataBearer } from '@smithy/types';
 import type { ArrayElement, ArrayKey, KeyByValueType } from '@abacus/common';
 
-import { toNonNegativeIntegerOrNull } from '@abacus/common';
-
 export async function awsPaginatedRequest<
   ClientInput extends object,
   ClientOutput extends MetadataBearer,
@@ -73,7 +71,10 @@ export async function awsPaginatedRequest<
   if (typeof client === 'function') {
     client = new client();
   }
-  limit = toNonNegativeIntegerOrNull(limit) || Number.POSITIVE_INFINITY;
+  limit = Math.trunc(Number(limit));
+  if (!Number.isFinite(limit) || !Number.isSafeInteger(limit) || limit < 0) {
+    limit = Number.POSITIVE_INFINITY;
+  }
   if (!nextTokenOutputKey) {
     nextTokenOutputKey = nextTokenInputKey as any as NextTokenOutputKey;
   }

@@ -5,21 +5,23 @@ import { CloudFormationClient, ListExportsCommand } from '@aws-sdk/client-cloudf
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { Command, InvalidArgumentError, Option } from 'commander';
 import { awsPaginatedRequest } from '../src/aws-utils/awsPaginatedRequest';
-import { toNonNegativeIntegerOrNull } from '../src/common/toNonNegativeIntegerOrNull';
 import {
   DEFAULT_MAX_ATTEMPTS_PER_URL,
   DEFAULT_MAX_CONCURRENT_URLS,
   DEFAULT_STATE_MACHINE_URL_THRESHOLD,
   DISTRIBUTED_MAP_CONCURRENCY_LIMIT,
   VIRGINIA_ABC_ORIGIN,
-} from '../src/crawler/bin/crawler';
+} from '../src/crawler/constants';
 
 function optionToNonNegativeInteger(value: string): number {
-  const result = toNonNegativeIntegerOrNull(value);
-  if (result == null) {
-    throw new InvalidArgumentError(`Cannot convert '${value}' to an integer`);
+  const integer = Math.trunc(Number(value));
+  if (!Number.isFinite(integer) || !Number.isSafeInteger(integer)) {
+    throw new InvalidArgumentError('Argument must be an integer');
   }
-  return result;
+  if (integer < 0) {
+    throw new InvalidArgumentError('Argument cannot be negative');
+  }
+  return integer;
 }
 
 const options = new Command()
@@ -41,7 +43,7 @@ const options = new Command()
       const maxConcurrentUrls = optionToNonNegativeInteger(value);
       if (maxConcurrentUrls < DISTRIBUTED_MAP_CONCURRENCY_LIMIT) {
         throw new InvalidArgumentError(
-          `The '--max-concurrent-urls' option must be greater than or equal to the DISTRIBUTED_MAP_CONCURRENCY_LIMIT (${DISTRIBUTED_MAP_CONCURRENCY_LIMIT}).`
+          `Argument must be greater than or equal to the DISTRIBUTED_MAP_CONCURRENCY_LIMIT (${DISTRIBUTED_MAP_CONCURRENCY_LIMIT}).`
         );
       }
       return maxConcurrentUrls;
