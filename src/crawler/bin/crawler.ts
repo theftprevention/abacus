@@ -138,12 +138,12 @@ class CrawlerStack extends Stack {
     const enqueueUrlsLambda = stepLambda('enqueueUrls');
     historyTable.grantReadWriteData(enqueueUrlsLambda);
     bucket.grantReadWrite(enqueueUrlsLambda);
-    enqueueUrlsLambda.addToRolePolicy(createUrlTablePolicy(['Query']));
+    enqueueUrlsLambda.addToRolePolicy(createUrlTablePolicy(['Query', 'Scan']));
 
     // Lambda for crawling a page
     const getProductGroupLambda = stepLambda('getProductGroup');
     productTable.grantReadWriteData(getProductGroupLambda);
-    getProductGroupLambda.addToRolePolicy(createUrlTablePolicy(['PutItem', 'GetItem', 'DeleteItem']));
+    getProductGroupLambda.addToRolePolicy(createUrlTablePolicy(['PutItem', 'GetItem', 'DeleteItem', 'UpdateItem']));
 
     // const getProductGroupAlias = getProductGroupLambda.addAlias('Provisioned', {
     //   description: 'An alias of the "getProductGroup" lambda with provisioned concurrency.',

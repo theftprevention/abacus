@@ -1,16 +1,14 @@
 import type { HttpUrlString } from '@abacus/common';
 import type { CrawlContext } from '../types';
 
-import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { dynamoDBPaginatedRequest } from '@abacus/aws-utils';
 import { env, toHttpUrlStringOrNull, toNonNegativeIntegerOrNull } from '@abacus/common';
 import { getHistoryEntry, putHistoryEntry } from '../lib/historyTable';
+import { getBatchOfUnvisitedUrls } from '../lib/urlTable';
 
 const S3_BUCKET = env('S3_BUCKET');
 const S3_QUEUED_URLS_KEY = env('S3_QUEUED_URLS_KEY');
 
-const dynamoDBClient = new DynamoDBClient();
 const s3Client = new S3Client();
 
 /**
@@ -18,42 +16,23 @@ const s3Client = new S3Client();
  */
 export async function enqueueUrls(event: { Payload: { context: CrawlContext } }) {
   const { context } = event.Payload;
-  const { maxAttemptsPerUrl, maxConcurrentUrls, urlTableName } = context;
-
   const historyEntry = await getHistoryEntry(context.crawlId);
   const {
     batchUrlCount: previousBatchUrlCount,
     urlCount: previousUrlCount,
   } = historyEntry;
   const records: {
-    maxAttemptsPerUrl: typeof maxAttemptsPerUrl;
+    maxAttemptsPerUrl: number;
     status: number;
     url: HttpUrlString;
-    urlTableName: typeof urlTableName;
+    urlTableName: string;
   }[] = [];
 
   const remainingUrls = context.maxUrls - previousUrlCount;
   if (remainingUrls > 0) {
     // Get next batch of URLS to visit
-    const pageSize = Math.min(maxConcurrentUrls, remainingUrls);
-    const items = (await dynamoDBPaginatedRequest(
-      dynamoDBClient,
-      QueryCommand,
-      {
-        TableName: context.urlTableName,
-        KeyConditionExpression: '#status < :maxattempts',
-        ExpressionAttributeNames: {
-          '#status': 'status',
-        },
-        ExpressionAttributeValues: {
-          ':maxattempts': { N: `${maxAttemptsPerUrl}` },
-        },
-        ConsistentRead: true,
-        Limit: Math.min(50, pageSize),
-      },
-      pageSize
-    ));
-
+    const items = await getBatchOfUnvisitedUrls(historyEntry);
+    const { maxAttemptsPerUrl, urlTableName } = context;
     let index = 0;
     let status: number | null;
     let url: HttpUrlString | null;
