@@ -1,1 +1,2 @@
 - Refactor `crawlId` and `crawlName`; do we really need both? Can we get rid of the `uuid` dependency?
+- Helper for converting a JavaScript object to a DynamoDB item
