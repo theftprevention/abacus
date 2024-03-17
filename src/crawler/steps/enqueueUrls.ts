@@ -1,4 +1,4 @@
-import type { UrlString } from '../../core/types';
+import type { HttpUrlString } from '../../core/types';
 import type { CrawlContext } from '../types';
 
 import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
@@ -6,7 +6,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { dynamoDBPaginatedRequest } from '../../core/helpers/dynamoDBPaginatedRequest';
 import { env } from '../../core/helpers/env';
 import { envInteger } from '../../core/helpers/envInteger';
-import { toUrlStringOrNull } from '../../core/helpers/toUrlStringOrNull';
+import { toHttpUrlStringOrNull } from '../../core/helpers/toHttpUrlStringOrNull';
 import { getHistoryEntry, putHistoryEntry } from '../lib/historyTable';
 import { UrlStatus } from '../lib/urlTable';
 
@@ -45,10 +45,10 @@ export async function enqueueUrls(context: CrawlContext) {
   ));
 
   let index = 0;
-  let url: UrlString | null;
-  const urls: UrlString[] = [];
+  let url: HttpUrlString | null;
+  const urls: HttpUrlString[] = [];
   for (const item of items) {
-    url = toUrlStringOrNull(item?.url?.S);
+    url = toHttpUrlStringOrNull(item?.url?.S);
     if (url) {
       urls[index++] = url;
     }

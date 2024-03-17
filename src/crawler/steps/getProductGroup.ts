@@ -1,12 +1,12 @@
 import type { ProductGroup } from '../../core/classes/productGroup';
-import type { UrlString } from '../../core/types';
+import type { HttpUrlString } from '../../core/types';
 
 import { HttpResponseError } from '../../core/classes/httpResponseError';
 import { loadProductGroup } from '../../core/loadProductGroup';
 import { saveProductGroup } from '../lib/productTable';
 import { markUrlAsVisited } from '../lib/urlTable';
 
-export async function getProductGroup(url: URL | UrlString, urlTableName: string): Promise<void> {
+export async function getProductGroup(url: URL | HttpUrlString, urlTableName: string): Promise<void> {
   // Mark the URL as visited
   await markUrlAsVisited(url, urlTableName);
 

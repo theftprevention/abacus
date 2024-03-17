@@ -1,16 +1,16 @@
-import type { UrlString } from '../types';
+import type { HttpUrlString } from '../types';
 
-export function toUrlStringOrNull(
+export function toHttpUrlStringOrNull(
   value: unknown,
   base?: URL | string | null
-): UrlString | null {
+): HttpUrlString | null {
   if (!value) {
     return null;
   }
   try {
     const url = new URL(String(value), base || void 0);
     url.protocol = 'https:';
-    return url.href as UrlString;
+    return url.href as HttpUrlString;
   } catch {
     return null;
   }

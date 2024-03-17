@@ -1,14 +1,14 @@
-import type { Guid, NonMethodPropertyKey, UrlString } from '../types';
+import type { Guid, NonMethodPropertyKey, HttpUrlString } from '../types';
 
 import { VIRGINIA_ABC_ORIGIN } from '../constants';
 import { classInstanceToJSON } from '../helpers/classInstanceToJSON';
 import { toGuidOrNull } from '../helpers/toGuidOrNull';
+import { toHttpUrlStringOrNull } from '../helpers/toHttpUrlStringOrNull';
 import { toNonNegativeIntegerOrNull } from '../helpers/toNonNegativeIntegerOrNull';
 import { toPriceOrNull } from '../helpers/toPriceOrNull';
 import { toString } from '../helpers/toString';
 import { toStringArray } from '../helpers/toStringArray';
 import { toStringOrNull } from '../helpers/toStringOrNull';
-import { toUrlStringOrNull } from '../helpers/toUrlStringOrNull';
 
 export class Product {
   constructor(properties?: ProductProperties | null) {
@@ -253,12 +253,12 @@ export class Product {
   //#endregion
 
   //#region productImageUrl
-  #productImageUrl: UrlString | null = null;
-  get productImageUrl(): UrlString | null {
+  #productImageUrl: HttpUrlString | null = null;
+  get productImageUrl(): HttpUrlString | null {
     return this.#productImageUrl;
   }
   set productImageUrl(value: unknown) {
-    this.#productImageUrl = toUrlStringOrNull(value, VIRGINIA_ABC_ORIGIN);
+    this.#productImageUrl = toHttpUrlStringOrNull(value, VIRGINIA_ABC_ORIGIN);
   }
   //#endregion
 
@@ -373,12 +373,12 @@ export class Product {
   //#endregion
 
   //#region url
-  #url: UrlString | null = null;
-  get url(): UrlString | null {
+  #url: HttpUrlString | null = null;
+  get url(): HttpUrlString | null {
     return this.#url;
   }
   set url(value: unknown) {
-    this.#url = toUrlStringOrNull(value, VIRGINIA_ABC_ORIGIN);
+    this.#url = toHttpUrlStringOrNull(value, VIRGINIA_ABC_ORIGIN);
   }
   //#endregion
 

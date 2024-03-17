@@ -1,4 +1,4 @@
-import type { UrlString } from './types';
+import type { HttpUrlString } from './types';
 
 import { HttpResponseError } from './classes/httpResponseError';
 import { Product, type ProductProperties } from './classes/product';
@@ -7,7 +7,7 @@ import { loadHtmlDocument } from './helpers/loadHtmlDocument';
 
 const closeoutPattern = /CLOSEOUT/i;
 
-export async function loadProductGroup(url: URL | UrlString): Promise<ProductGroup> {
+export async function loadProductGroup(url: URL | HttpUrlString): Promise<ProductGroup> {
   let document: Document;
   const group = new ProductGroup(url);
 

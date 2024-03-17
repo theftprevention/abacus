@@ -1,4 +1,4 @@
-import type { UrlString } from '../../core/types';
+import type { HttpUrlString } from '../../core/types';
 import type { CrawlContext } from '../types';
 
 import {
@@ -57,8 +57,8 @@ export async function deleteUrlTable(context: CrawlContext): Promise<void> {
   }));
 }
 
-export async function markUrlAsVisited(url: URL | UrlString, urlTableName: string): Promise<void> {
-  url = String(url) as UrlString;
+export async function markUrlAsVisited(url: URL | HttpUrlString, urlTableName: string): Promise<void> {
+  url = String(url) as HttpUrlString;
 
   // Write an entry saying the url has been visited
   await client.send(new PutItemCommand({
@@ -80,8 +80,8 @@ export async function markUrlAsVisited(url: URL | UrlString, urlTableName: strin
   }));
 }
 
-export async function storeUrls(urls: readonly UrlString[], urlTableName: string): Promise<void> {
-  let batch: UrlString[];
+export async function storeUrls(urls: readonly HttpUrlString[], urlTableName: string): Promise<void> {
+  let batch: HttpUrlString[];
   let batchSize: number;
   let index = 0;
   const promises: Promise<any>[] = [];

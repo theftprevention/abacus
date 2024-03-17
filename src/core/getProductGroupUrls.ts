@@ -1,8 +1,9 @@
-import type { UrlString } from './types';
+import type { HttpUrlString } from './types';
+
 import { request as initRequest } from 'node:https';
 import { HttpResponseError } from './classes/httpResponseError';
+import { toHttpUrlStringOrNull } from './helpers/toHttpUrlStringOrNull';
 import { toStringOrNull } from './helpers/toStringOrNull';
-import { toUrlStringOrNull } from './helpers/toUrlStringOrNull';
 
 const searchPayloadDefaults = Object.freeze({
   searchHub: 'ProductsSearchHub',
@@ -35,15 +36,15 @@ function getPageNumber(firstResult: number, totalCount: number | null): string {
 const jsonContentTypePattern = /^application\/json\b/i;
 
 export async function getProductGroupUrls(
-  origin: UrlString
-): Promise<UrlString[]> {
+  origin: HttpUrlString
+): Promise<HttpUrlString[]> {
   const searchEndpointUrl = new URL('coveo/rest/search/v2', origin);
   const { searchParams } = searchEndpointUrl;
   searchParams.set('sitecoreItemUri', 'sitecore://web/{C5781676-5EFD-4D25-8A54-723F2AC24ADC}?lang=en&amp;ver=80');
   searchParams.set('siteName', 'website');
 
   const searchEndpoint = searchEndpointUrl.href;
-  const urls = new Set<UrlString>();
+  const urls = new Set<HttpUrlString>();
 
   // Fetch list of products
   let firstResult = 0;
@@ -119,9 +120,9 @@ export async function getProductGroupUrls(
 
     // Create product groups from result set
     const { results } = data;
-    let url: UrlString | null;
+    let url: HttpUrlString | null;
     for (const result of results) {
-      url = toUrlStringOrNull(result?.raw?.clickableuri);
+      url = toHttpUrlStringOrNull(result?.raw?.clickableuri);
       if (url) {
         urls.add(url);
       }

@@ -1,12 +1,12 @@
-import type { NonMethodPropertyKey, UrlString } from '../types';
+import type { NonMethodPropertyKey, HttpUrlString } from '../types';
 
 import { classInstanceToJSON } from '../helpers/classInstanceToJSON';
-import { toUrlString } from '../helpers/toUrlString';
+import { toHttpUrlString } from '../helpers/toHttpUrlString';
 import { Product, type ProductProperties, type ProductPropertyKey } from './product';
 
 export class ProductGroup {
-  constructor(url: URL | UrlString, products?: ArrayLike<ProductProperties> | Iterable<ProductProperties> | null) {
-    this.#url = toUrlString(url);
+  constructor(url: URL | HttpUrlString, products?: ArrayLike<ProductProperties> | Iterable<ProductProperties> | null) {
+    this.#url = toHttpUrlString(url);
     this.#products = toProductArray(products);
     Object.preventExtensions(this);
   }
@@ -51,8 +51,8 @@ export class ProductGroup {
     this.#type = value == null ? void 0 : String(value);
   }
 
-  #url: UrlString;
-  get url(): UrlString {
+  #url: HttpUrlString;
+  get url(): HttpUrlString {
     return this.#url;
   }
 

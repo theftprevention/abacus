@@ -1,12 +1,12 @@
-import type { UrlString } from '../core/types';
+import type { HttpUrlString } from '../core/types';
 import type { CrawlContext, CrawlOptions } from './types';
 
 import { v4 as uuid } from 'uuid';
 import { env } from '../core/helpers/env';
 import { sanitizeTimestamp } from '../core/helpers/sanitizeTimestamp';
+import { toHttpUrlString } from '../core/helpers/toHttpUrlString';
+import { toHttpUrlStringOrNull } from '../core/helpers/toHttpUrlStringOrNull';
 import { toString } from '../core/helpers/toString';
-import { toUrlString } from '../core/helpers/toUrlString';
-import { toUrlStringOrNull } from '../core/helpers/toUrlStringOrNull';
 import { beginCrawl } from './steps/beginCrawl';
 import { enqueueUrls } from './steps/enqueueUrls';
 import { getProductGroup } from './steps/getProductGroup';
@@ -28,7 +28,7 @@ export async function beginCrawlHandler(options?: Partial<CrawlOptions> | null) 
     crawlId,
     crawlName: toString(options.crawlName) || `crawl-${sanitizeTimestamp()}`,
     stateMachineArn: toString(options.stateMachineArn) || env('CRAWLER_STATE_MACHINE_ARN'),
-    targetOrigin: toUrlStringOrNull(options.targetOrigin) || toUrlString(env('TARGET_ORIGIN')),
+    targetOrigin: toHttpUrlStringOrNull(options.targetOrigin) || toHttpUrlString(env('TARGET_ORIGIN')),
     urlTableName,
   });
 }
@@ -43,7 +43,7 @@ export async function enqueueUrlsHandler(event: { Payload: { context: CrawlConte
 /**
  * Extract the products from a single webpage.
  */
-export async function getProductGroupHandler(event: { url: UrlString; urlTableName: string }) {
+export async function getProductGroupHandler(event: { url: HttpUrlString; urlTableName: string }) {
   return await getProductGroup(event.url, event.urlTableName);
 }
 

@@ -1,4 +1,4 @@
-import type { UrlString } from '../core/types';
+import type { HttpUrlString } from '../core/types';
 import type * as handlers from './index';
 
 export interface CrawlContext extends Omit<CrawlOptions, 'urlTableNamePrefix'> {
@@ -9,7 +9,7 @@ export interface CrawlOptions {
   readonly crawlId: string;
   readonly crawlName: string;
   readonly stateMachineArn: string;
-  readonly targetOrigin: UrlString;
+  readonly targetOrigin: HttpUrlString;
   readonly urlTableNamePrefix: string;
 }
 
