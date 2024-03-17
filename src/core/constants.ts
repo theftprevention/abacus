@@ -12,6 +12,8 @@ export const CRAWLER_STATE_MACHINE_NAME = 'abacus-crawler-state-machine';
  */
 export const DISTRIBUTED_MAP_CONCURRENCY_LIMIT = 5;
 
+export const MAX_ATTEMPTS_PER_URL = 3;
+
 /**
  * The default number of urls to sync in parallel.
  * 

@@ -1,27 +1,50 @@
-import type { ProductGroup } from '../../core/classes/productGroup';
 import type { HttpUrlString } from '../../core/types';
 
 import { HttpResponseError } from '../../core/classes/httpResponseError';
-import { loadProductGroup } from '../../core/loadProductGroup';
+import { envInteger } from '../../core/helpers/envInteger';
+import { loadHtmlDocument } from '../../core/helpers/loadHtmlDocument';
+import { parseProductGroupFromDocument } from '../../core/parseProductGroupFromDocument';
 import { saveProductGroup } from '../lib/productTable';
-import { markUrlAsVisited } from '../lib/urlTable';
+import { markUrlAsVisited, setUrlStatus } from '../lib/urlTable';
 
-export async function getProductGroup(url: URL | HttpUrlString, urlTableName: string): Promise<void> {
+const MAX_ATTEMPTS_PER_URL = envInteger('MAX_ATTEMPTS_PER_URL');
+
+export async function getProductGroup(
+  url: URL | HttpUrlString,
+  priorAttempts: number,
+  urlTableName: string
+): Promise<void> {
   // Mark the URL as visited
-  await markUrlAsVisited(url, urlTableName);
+  await markUrlAsVisited(url, priorAttempts, urlTableName);
 
-  // Load the product group
-  let productGroup: ProductGroup;
+  // Load the HTML document
+  let document: Document | null;
   try {
-    productGroup = await loadProductGroup(url);
+    document = await loadHtmlDocument(url);
   } catch (error) {
     if (!(error instanceof HttpResponseError)) {
       throw error;
     }
-    // TODO: Handle server errors / timeouts
-    throw error;
+    let status: number;
+    const { statusCode } = error;
+    if (statusCode && statusCode >= 400 && statusCode < 500 && statusCode !== 429) {
+      // Any 4xx status codes (except 429 Too Many Requests) should not result in a retry
+      status = statusCode;
+    } else {
+      status = priorAttempts + 1;
+      if (status >= MAX_ATTEMPTS_PER_URL) {
+        status = statusCode || MAX_ATTEMPTS_PER_URL;
+      }
+    }
+    await setUrlStatus(url, priorAttempts, status, urlTableName);
+    return;
   }
 
-  // Save products to database
-  await saveProductGroup(productGroup);
+  if (document) {
+    // Parse the product group
+    const productGroup = parseProductGroupFromDocument(document, url);
+
+    // Save products to database
+    await saveProductGroup(productGroup);
+  }
 }

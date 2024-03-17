@@ -43,8 +43,8 @@ export async function enqueueUrlsHandler(event: { Payload: { context: CrawlConte
 /**
  * Extract the products from a single webpage.
  */
-export async function getProductGroupHandler(event: { url: HttpUrlString; urlTableName: string }) {
-  return await getProductGroup(event.url, event.urlTableName);
+export async function getProductGroupHandler(event: { status: number; url: HttpUrlString; urlTableName: string }) {
+  return await getProductGroup(event.url, event.status, event.urlTableName);
 }
 
 /**

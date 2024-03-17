@@ -27,6 +27,7 @@ import {
   CONSTRUCT_NAME_PREFIX,
   CRAWLER_STATE_MACHINE_NAME,
   DISTRIBUTED_MAP_CONCURRENCY_LIMIT,
+  MAX_ATTEMPTS_PER_URL,
   MAX_CONCURRENT_URLS,
   S3_QUEUED_URLS_KEY,
   STATE_MACHINE_URL_THRESHOLD,
@@ -94,6 +95,7 @@ export class CrawlerStack extends Stack {
         environment: {
           CRAWLER_STATE_MACHINE_ARN: stateMachineArn,
           HISTORY_TABLE_NAME: historyTable.tableName,
+          MAX_ATTEMPTS_PER_URL: String(MAX_ATTEMPTS_PER_URL),
           MAX_CONCURRENT_URLS: String(MAX_CONCURRENT_URLS),
           PRODUCT_TABLE_NAME: productTable.tableName,
           S3_BUCKET: bucket.bucketName,

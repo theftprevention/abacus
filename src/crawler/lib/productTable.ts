@@ -59,6 +59,10 @@ function stringSet<Key extends KeyByValueType<Product, readonly string[]>>(
 }
 
 export async function saveProductGroup(productGroup: ProductGroup): Promise<void> {
+  const { products } = productGroup;
+  if (!products.length) {
+    return;
+  }
   await client.send(new BatchWriteItemCommand({
     RequestItems: {
       [PRODUCT_TABLE_NAME]: productGroup.products.map((product) => ({

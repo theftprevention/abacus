@@ -6,10 +6,11 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { dynamoDBPaginatedRequest } from '../../core/helpers/dynamoDBPaginatedRequest';
 import { env } from '../../core/helpers/env';
 import { envInteger } from '../../core/helpers/envInteger';
+import { toNonNegativeIntegerOrNull } from '../../core/helpers/toNonNegativeIntegerOrNull';
 import { toHttpUrlStringOrNull } from '../../core/helpers/toHttpUrlStringOrNull';
 import { getHistoryEntry, putHistoryEntry } from '../lib/historyTable';
-import { UrlStatus } from '../lib/urlTable';
 
+const MAX_ATTEMPTS_PER_URL = envInteger('MAX_ATTEMPTS_PER_URL');
 const MAX_CONCURRENT_URLS = envInteger('MAX_CONCURRENT_URLS');
 const S3_BUCKET = env('S3_BUCKET');
 const S3_QUEUED_URLS_KEY = env('S3_QUEUED_URLS_KEY');
@@ -31,30 +32,35 @@ export async function enqueueUrls(context: CrawlContext) {
     QueryCommand,
     {
       TableName: context.urlTableName,
-      KeyConditionExpression: '#status = :status',
-      ExpressionAttributeValues: {
-        ':status': { N: `${UrlStatus.PENDING}` },
-      },
+      KeyConditionExpression: '#status < :maxattempts',
       ExpressionAttributeNames: {
         '#status': 'status',
       },
+      ExpressionAttributeValues: {
+        ':maxattempts': { N: `${MAX_ATTEMPTS_PER_URL}` },
+      },
       ConsistentRead: true,
-      Limit: 50,
+      Limit: Math.min(50, MAX_CONCURRENT_URLS),
     },
     MAX_CONCURRENT_URLS
   ));
 
+  const { urlTableName } = context;
+  const records: { status: number; url: HttpUrlString; urlTableName: typeof urlTableName }[] = [];
   let index = 0;
+  let status: number | null;
   let url: HttpUrlString | null;
-  const urls: HttpUrlString[] = [];
   for (const item of items) {
-    url = toHttpUrlStringOrNull(item?.url?.S);
-    if (url) {
-      urls[index++] = url;
+    if (
+      item &&
+      (url = toHttpUrlStringOrNull(item.url?.S)) &&
+      (status = toNonNegativeIntegerOrNull(item.status?.N)) != null
+    ) {
+      records[index++] = { status, url, urlTableName };
     }
   }
 
-  const queuedUrlCount = urls.length;
+  const queuedUrlCount = records.length;
   const batchUrlCount = previousBatchUrlCount + queuedUrlCount;
   const urlCount = previousUrlCount + queuedUrlCount;
 
@@ -66,15 +72,14 @@ export async function enqueueUrls(context: CrawlContext) {
   });
 
   // Save the URLs to S3 to avoid hitting the max request size limit of 256KB.
-  const { urlTableName } = context;
   await s3Client.send(new PutObjectCommand({
     Bucket: S3_BUCKET,
     Key: S3_QUEUED_URLS_KEY,
-    Body: JSON.stringify(urls.map((url) => ({ url, urlTableName }))),
+    Body: JSON.stringify(records),
   }));
 
   return {
-    queueIsNonEmpty: urls.length > 0,
+    queueIsNonEmpty: records.length > 0,
     thresholdExceeded: batchUrlCount > STATE_MACHINE_URL_THRESHOLD,
   };
 }

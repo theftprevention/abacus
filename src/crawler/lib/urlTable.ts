@@ -5,22 +5,15 @@ import {
   BatchWriteItemCommand,
   BillingMode,
   CreateTableCommand,
-  DeleteItemCommand,
   DeleteTableCommand,
   DynamoDBClient,
   KeyType,
-  PutItemCommand,
   ScalarAttributeType,
+  UpdateItemCommand,
   waitUntilTableExists,
 } from '@aws-sdk/client-dynamodb';
 
 const client = new DynamoDBClient();
-
-export const enum UrlStatus {
-  PENDING,
-  VISITED,
-  ERROR,
-}
 
 export async function createUrlTable(tableName: string): Promise<void> {
   await client.send(new CreateTableCommand({
@@ -57,26 +50,33 @@ export async function deleteUrlTable(context: CrawlContext): Promise<void> {
   }));
 }
 
-export async function markUrlAsVisited(url: URL | HttpUrlString, urlTableName: string): Promise<void> {
-  url = String(url) as HttpUrlString;
+export async function markUrlAsVisited(
+  url: URL | HttpUrlString,
+  priorStatus: number,
+  urlTableName: string
+) {
+  return setUrlStatus(url, priorStatus, 200, urlTableName);
+}
 
-  // Write an entry saying the url has been visited
-  await client.send(new PutItemCommand({
-    Item: {
-      status: { N: `${UrlStatus.VISITED}` },
-      url: { S: url },
-      visitedAt: { N: `${Date.now()}` },
-    },
+export async function setUrlStatus(
+  url: URL | HttpUrlString,
+  priorStatus: number,
+  newStatus: number,
+  urlTableName: string
+): Promise<void> {
+  await client.send(new UpdateItemCommand({
     TableName: urlTableName,
-  }));
-
-  // Delete the entry that says it's not visited
-  await client.send(new DeleteItemCommand({
     Key: {
-      status: { N: `${UrlStatus.PENDING}` },
-      url: { S: url },
+      status: { N: `${priorStatus}` },
+      url: { S: String(url) },
     },
-    TableName: urlTableName,
+    UpdateExpression: 'SET #status = :status',
+    ExpressionAttributeNames: {
+      '#status': 'status',
+    },
+    ExpressionAttributeValues: {
+      ':status': { N: `${newStatus}` },
+    },
   }));
 }
 
@@ -93,8 +93,8 @@ export async function storeUrls(urls: readonly HttpUrlString[], urlTableName: st
           [urlTableName]: batch.map((url) => ({
             PutRequest: {
               Item: {
+                status: { N: '0' },
                 url: { S: url },
-                status: { N: `${UrlStatus.PENDING}` },
               },
             },
           })),

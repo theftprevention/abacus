@@ -1,24 +1,15 @@
 import type { HttpUrlString } from './types';
 
-import { HttpResponseError } from './classes/httpResponseError';
 import { Product, type ProductProperties } from './classes/product';
 import { ProductGroup } from './classes/productGroup';
-import { loadHtmlDocument } from './helpers/loadHtmlDocument';
 
 const closeoutPattern = /CLOSEOUT/i;
 
-export async function loadProductGroup(url: URL | HttpUrlString): Promise<ProductGroup> {
-  let document: Document;
+export function parseProductGroupFromDocument(
+  document: Document,
+  url: URL | HttpUrlString
+): ProductGroup {
   const group = new ProductGroup(url);
-
-  try {
-    document = await loadHtmlDocument(url);
-  } catch (error) {
-    if (error instanceof HttpResponseError && error.statusCode === 404) {
-      return group;
-    }
-    throw error;
-  }
 
   // Parse the product data
   const productDataJson = document.getElementById('productData')?.getAttribute('data-skus');

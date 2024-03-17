@@ -8,8 +8,8 @@ import { toStringOrNull } from './toStringOrNull';
 
 const htmlContentTypePattern = /^text\/html\b/i;
 
-export function loadHtmlDocument(url: URL | HttpUrlString): Promise<Document> {
-  return new Promise<Document>((resolve, reject) => {
+export function loadHtmlDocument(url: URL | HttpUrlString): Promise<Document | null> {
+  return new Promise<Document | null>((resolve, reject) => {
     const parsedUrl = new URL(url);
     let get: typeof getHttp | typeof getHttps;
     switch (parsedUrl.protocol) {
@@ -24,7 +24,7 @@ export function loadHtmlDocument(url: URL | HttpUrlString): Promise<Document> {
     }
     const request = get(parsedUrl, (response) => {
       const { statusCode } = response;
-      if (statusCode !== 200) {
+      if (!statusCode || statusCode >= 300) {
         return reject(new HttpResponseError(statusCode, response.statusMessage));
       }
       let body = '';
@@ -37,8 +37,8 @@ export function loadHtmlDocument(url: URL | HttpUrlString): Promise<Document> {
         }
         try {
           resolve(new JSDOM(body).window.document);
-        } catch (error) {
-          reject(error);
+        } catch {
+          resolve(null);
         }
       });
     });
