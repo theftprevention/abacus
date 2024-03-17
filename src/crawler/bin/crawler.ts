@@ -67,6 +67,8 @@ const DEFAULT_STATE_MACHINE_URL_THRESHOLD = 10000;
  */
 const DISTRIBUTED_MAP_CONCURRENCY_LIMIT = 5;
 
+const LAMBDA_RUNTIME = Runtime.NODEJS_20_X;
+
 /**
  * The key of the file within the S3 bucket in which the enqueued URLs are stored.
  */
@@ -125,15 +127,20 @@ class CrawlerStack extends Stack {
       arnFormat: ArnFormat.COLON_RESOURCE_NAME,
     });
 
-    const abacusLayer = new LayerVersion(this, `${CONSTRUCT_NAME_PREFIX}Layer`, {
-      code: Code.fromAsset('bin/layers/abacus'),
-    });
-
-    const vendorLayer = new LayerVersion(this, 'VendorLayer', {
-      code: Code.fromAsset('bin/layers/vendor'),
-    });
-
     const stepLambda = (() => {
+      const layer = (id: string, path: string) => new LayerVersion(
+        this,
+        id,
+        {
+          code: Code.fromAsset(path),
+          compatibleRuntimes: [LAMBDA_RUNTIME],
+        }
+      );
+  
+      const abacusLayer = layer(`${CONSTRUCT_NAME_PREFIX}Layer`, 'bin/layers/abacus');
+  
+      const vendorLayer = layer('VendorLayer', 'bin/layers/vendor');
+
       const defaultProps = {
         bundling: {
           externalModules: ['@aws-sdk/*', 'jsdom', 'uuid', '@abacus/*'],
@@ -152,8 +159,8 @@ class CrawlerStack extends Stack {
         },
         layers: [abacusLayer, vendorLayer],
         memorySize: 512,
-        runtime: Runtime.NODEJS_20_X,
-        timeout: Duration.minutes(5),
+        runtime: LAMBDA_RUNTIME,
+        timeout: Duration.minutes(3),
       } satisfies NodejsFunctionProps;
 
       return (stepName: StepName) => new NodejsFunction(
