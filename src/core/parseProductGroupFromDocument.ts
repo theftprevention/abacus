@@ -1,7 +1,7 @@
-import type { HttpUrlString } from './types';
+import type { HttpUrlString } from '@abacus/common';
 
-import { Product, type ProductProperties } from './classes/product';
-import { ProductGroup } from './classes/productGroup';
+import { Product, type ProductProperties } from './product';
+import { ProductGroup } from './productGroup';
 
 const closeoutPattern = /CLOSEOUT/i;
 
@@ -16,7 +16,7 @@ export function parseProductGroupFromDocument(
   if (!productDataJson) {
     return group;
   }
-  type Item = ProductProperties | string | number | boolean | null | undefined;
+  type Item = ProductProperties | null | undefined;
   let productData: Item | Item[] = JSON.parse(productDataJson);
   if (!productData || typeof productData !== 'object') {
     return group;
@@ -24,56 +24,25 @@ export function parseProductGroupFromDocument(
   if (!Array.isArray(productData)) {
     productData = [productData];
   }
-  let product: Product;
-  const products: Product[] = [];
-  for (const element of productData) {
-    if (
-      element &&
-      typeof element === 'object' &&
-      (product = new Product(element)).productName &&
-      product.url
-    ) {
-      products.push(product);
-    }
-  }
+  group.addProducts(productData);
 
   const descriptionContainer = document.querySelector('.abc-product-card .description');
-  const determineCloseout: (product: Product) => void = descriptionContainer
-    ? (product) => {
-        const { productId } = product;
-        if (productId) {
-          const pillContainer = descriptionContainer.querySelector(`.pills[ng-show="product.productId==='${productId}'"]`);
-          if (pillContainer) {
-            const pillText = pillContainer.getElementsByClassName('red-pill')[0]?.textContent;
-            if (pillText && closeoutPattern.test(pillText)) {
-              product.closeout = true;
-            }
-          }
-        }
-      }
-    : function () {};
-
-  let index = 0;
-  let productUrl: URL | string | null | undefined;
-  for (const product of products) {
+  if (descriptionContainer) {
     // Determine whether each product is part of a closeout sale
-    determineCloseout(product);
-
-    // Append the 'productSize' query parameter to the product URLs
-    productUrl = product.url;
-    if (productUrl) {
-      try {
-        productUrl = new URL(productUrl);
-        const params = productUrl.searchParams;
-        if (!params.has('productSize')) {
-          params.set('productSize', String(index));
-        }
-        product.url = productUrl.href;
-      } catch {}
+    let pillContainer: Element | null;
+    let pillText: string | null;
+    let productId: Product['productId'];
+    for (const product of group.products) {
+      if (
+        (productId = product.productId) &&
+        (pillContainer = descriptionContainer.querySelector(`.pills[ng-show="product.productId==='${productId}'"]`)) &&
+        (pillText = pillContainer.getElementsByClassName('red-pill')[0]?.textContent) &&
+        closeoutPattern.test(pillText)
+      ) {
+        product.closeout = true;
+      }
     }
-    index++;
   }
 
-  group.products = products;
   return group;
 }

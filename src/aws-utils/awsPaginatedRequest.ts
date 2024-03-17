@@ -1,7 +1,7 @@
 import type { Client as IClient, Command, MetadataBearer } from '@smithy/types';
-import type { ArrayElement, ArrayKey, KeyByValueType } from '../types';
+import type { ArrayElement, ArrayKey, KeyByValueType } from '@abacus/common';
 
-import { toNonNegativeIntegerOrNull } from './toNonNegativeIntegerOrNull';
+import { toNonNegativeIntegerOrNull } from '@abacus/common';
 
 export async function awsPaginatedRequest<
   ClientInput extends object,

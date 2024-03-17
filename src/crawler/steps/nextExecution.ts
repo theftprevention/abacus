@@ -1,12 +1,18 @@
 import type { CrawlContext } from '../types';
 
 import { SFNClient, StartExecutionCommand } from '@aws-sdk/client-sfn';
-import { sanitizeTimestamp } from '../../core/helpers/sanitizeTimestamp';
+import { sanitizeTimestamp } from '@abacus/common';
 import { updateHistoryEntry } from '../lib/historyTable';
 
 const sfnClient = new SFNClient();
 
-export async function nextExecution(context: CrawlContext): Promise<void> {
+/**
+ * Responsible for continuing execution via another state machine execution if we're getting too
+ * close to the maximum number of steps in our state machine execution.
+ */
+export async function nextExecution(event: { Payload: { context: CrawlContext } }): Promise<void> {
+  const { context } = event.Payload;
+
   // Reset batch count for next state machine execution
   await updateHistoryEntry(context.crawlId, {
     batchUrlCount: 0,

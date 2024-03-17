@@ -1,13 +1,12 @@
-import type { NonMethodPropertyKey, HttpUrlString } from '../types';
+import type { NonMethodPropertyKey, HttpUrlString } from '@abacus/common';
 
-import { classInstanceToJSON } from '../helpers/classInstanceToJSON';
-import { toHttpUrlString } from '../helpers/toHttpUrlString';
+import { classInstanceToJSON, toHttpUrlString } from '@abacus/common';
 import { Product, type ProductProperties, type ProductPropertyKey } from './product';
 
 export class ProductGroup {
   constructor(url: URL | HttpUrlString, products?: ArrayLike<ProductProperties> | Iterable<ProductProperties> | null) {
     this.#url = toHttpUrlString(url);
-    this.#products = toProductArray(products);
+    this.#products = toProductArray(this, products);
     Object.preventExtensions(this);
   }
 
@@ -39,9 +38,6 @@ export class ProductGroup {
   get products(): readonly Product[] {
     return this.#products;
   }
-  set products(value: unknown) {
-    this.#products = toProductArray(value);
-  }
 
   #type: string | undefined;
   get type(): string | null {
@@ -56,6 +52,26 @@ export class ProductGroup {
     return this.#url;
   }
 
+  addProduct(product: ProductProperties | null | undefined): void {
+    this.addProducts([product]);
+  }
+
+  addProducts(
+    products:
+      | ArrayLike<ProductProperties | null | undefined>
+      | Iterable<ProductProperties | null | undefined>
+      | null
+      | undefined
+  ): void {
+    const newProducts = toProductArray(this, products);
+    if (newProducts.length) {
+      const oldProducts = this.#products;
+      this.#products = oldProducts.length
+        ? Object.freeze([...oldProducts, ...newProducts])
+        : newProducts;
+    }
+  }
+
   toJSON() {
     return classInstanceToJSON<ProductGroup>(this, productGroupPropertyKeys);
   }
@@ -63,6 +79,8 @@ export class ProductGroup {
 
 const productGroupPropertyKeys = (() => {
   const keys = new Set(Reflect.ownKeys(ProductGroup.prototype) as ('constructor' | keyof ProductGroup)[]);
+  keys.delete('addProduct');
+  keys.delete('addProducts');
   keys.delete('constructor');
   keys.delete('toJSON');
 
@@ -98,13 +116,17 @@ function propertyFromProducts<Key extends ProductPropertyKey, Fallback = undefin
   return value;
 }
 
-function toProductArray(value: unknown): readonly Product[] {
+function toProductArray(group: ProductGroup, value: unknown): readonly Product[] {
   let index = 0;
+  let product: Product;
   let products: Product[] = [];
   if (value && typeof value === 'object') {
-    for (const element of Array.isArray(value) ? value : Array.from(value as any)) {
-      if (element && typeof element === 'object') {
-        products[index++] = element instanceof Product ? element : new Product(element);
+    for (const data of (Array.isArray(value) ? value : Array.from(value as any)) as (ProductProperties | null | undefined)[]) {
+      if (data && typeof data === 'object') {
+        product = new Product(group, data);
+        if (product.id && product.productName && product.url) {
+          products[index++] = product;
+        }
       }
     }
   }

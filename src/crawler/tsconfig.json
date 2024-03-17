@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig-base.json",
+  "exclude": [],
+  "include": [
+    "./**/*.ts",
+    "./**/*.d.ts"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "outDir": ".",
+    "rootDir": "."
+  },
+  "references": [
+    { "path": "../aws-utils" },
+    { "path": "../common" },
+    { "path": "../core" }
+  ]
+}

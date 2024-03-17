@@ -1,4 +1,4 @@
-import type { NonMethodPropertyKey } from '../types';
+import type { NonMethodPropertyKey } from './types';
 
 export function classInstanceToJSON<T extends object>(
   target: T,

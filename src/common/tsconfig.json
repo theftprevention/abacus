@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig-base.json",
+  "include": [
+    "./**/*.ts",
+    "./**/*.d.ts"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "../../bin/layers/abacus/nodejs/node_modules/@abacus/common",
+    "rootDir": "."
+  }
+}

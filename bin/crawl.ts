@@ -2,7 +2,7 @@ import type { Uint8ArrayBlobAdapter } from '@smithy/util-stream';
 
 import { CloudFormationClient, ListExportsCommand } from '@aws-sdk/client-cloudformation';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
-import { awsPaginatedRequest } from '../src/core/helpers/awsPaginatedRequest';
+import { awsPaginatedRequest } from '../src/aws-utils/awsPaginatedRequest';
 
 process.env.AWS_SDK_LOAD_CONFIG = 'true';
 
@@ -28,8 +28,6 @@ const lambdaClient = new LambdaClient();
     });
     const response = await lambdaClient.send(command);
     let payload: Record<string, unknown> | Uint8ArrayBlobAdapter | undefined = response?.Payload;
-
-    console.log('beginCrawl response', response);
 
     if (payload) {
       payload = JSON.parse(payload.transformToString()) as Record<string, unknown>;

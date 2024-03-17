@@ -1,17 +1,20 @@
-import type { Guid, NonMethodPropertyKey, HttpUrlString } from '../types';
+import type { Guid, NonMethodPropertyKey, HttpUrlString } from '@abacus/common';
+import type { ProductGroup } from './productGroup';
 
-import { VIRGINIA_ABC_ORIGIN } from '../constants';
-import { classInstanceToJSON } from '../helpers/classInstanceToJSON';
-import { toGuidOrNull } from '../helpers/toGuidOrNull';
-import { toHttpUrlStringOrNull } from '../helpers/toHttpUrlStringOrNull';
-import { toNonNegativeIntegerOrNull } from '../helpers/toNonNegativeIntegerOrNull';
-import { toPriceOrNull } from '../helpers/toPriceOrNull';
-import { toString } from '../helpers/toString';
-import { toStringArray } from '../helpers/toStringArray';
-import { toStringOrNull } from '../helpers/toStringOrNull';
+import {
+  classInstanceToJSON,
+  toGuidOrNull,
+  toHttpUrlStringOrNull,
+  toNonNegativeIntegerOrNull,
+  toPriceOrNull,
+  toString,
+  toStringArray,
+  toStringOrNull,
+} from '@abacus/common';
 
 export class Product {
-  constructor(properties?: ProductProperties | null) {
+  constructor(group: ProductGroup, properties?: ProductProperties | null) {
+    this.#group = group;
     if (properties && typeof properties === 'object') {
       for (const key of productPropertyKeys) {
         if (key in properties) {
@@ -21,6 +24,8 @@ export class Product {
     }
     Object.preventExtensions(this);
   }
+
+  #group: ProductGroup;
 
   //#region availableInStore
   #availableInStore: boolean = false;
@@ -253,12 +258,13 @@ export class Product {
   //#endregion
 
   //#region productImageUrl
-  #productImageUrl: HttpUrlString | null = null;
+  #productImageUrl: string | null = null;
   get productImageUrl(): HttpUrlString | null {
-    return this.#productImageUrl;
+    const url = this.#productImageUrl;
+    return url ? toHttpUrlStringOrNull(url, this.#group.url) : null;
   }
   set productImageUrl(value: unknown) {
-    this.#productImageUrl = toHttpUrlStringOrNull(value, VIRGINIA_ABC_ORIGIN);
+    this.#productImageUrl = toStringOrNull(value);
   }
   //#endregion
 
@@ -373,12 +379,27 @@ export class Product {
   //#endregion
 
   //#region url
-  #url: HttpUrlString | null = null;
-  get url(): HttpUrlString | null {
-    return this.#url;
+  #url: string | null = null;
+  get url(): HttpUrlString {
+    const group = this.#group;
+    const groupUrl = group.url;
+    const override = this.#url;
+    let url: URL | HttpUrlString | null;
+    if (override && (url = toHttpUrlStringOrNull(override, groupUrl))) {
+      return url;
+    }
+    url = new URL(groupUrl);
+    const params = url.searchParams;
+    if (!params.has('productSize')) {
+      const index = group.products.indexOf(this);
+      if (index >= 0) {
+        params.set('productSize', String(index));
+      }
+    }
+    return url.href as HttpUrlString;
   }
   set url(value: unknown) {
-    this.#url = toHttpUrlStringOrNull(value, VIRGINIA_ABC_ORIGIN);
+    this.#url = toStringOrNull(value);
   }
   //#endregion
 

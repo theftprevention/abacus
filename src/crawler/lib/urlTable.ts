@@ -1,4 +1,4 @@
-import type { HttpUrlString } from '../../core/types';
+import type { HttpUrlString } from '@abacus/common';
 import type { CrawlContext } from '../types';
 
 import {

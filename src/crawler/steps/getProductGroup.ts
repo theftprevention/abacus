@@ -1,19 +1,23 @@
-import type { HttpUrlString } from '../../core/types';
+import type { HttpUrlString } from '@abacus/common';
 
-import { HttpResponseError } from '../../core/classes/httpResponseError';
-import { envInteger } from '../../core/helpers/envInteger';
-import { loadHtmlDocument } from '../../core/helpers/loadHtmlDocument';
-import { parseProductGroupFromDocument } from '../../core/parseProductGroupFromDocument';
+import { HttpResponseError, loadHtmlDocument } from '@abacus/common';
+import { parseProductGroupFromDocument } from '@abacus/core';
 import { saveProductGroup } from '../lib/productTable';
 import { markUrlAsVisited, setUrlStatus } from '../lib/urlTable';
 
-const MAX_ATTEMPTS_PER_URL = envInteger('MAX_ATTEMPTS_PER_URL');
+interface GetProductGroupOptions {
+  maxAttemptsPerUrl: number;
+  status: number;
+  url: HttpUrlString;
+  urlTableName: string;
+}
 
-export async function getProductGroup(
-  url: URL | HttpUrlString,
-  priorAttempts: number,
-  urlTableName: string
-): Promise<void> {
+/**
+ * Extract the products from a single webpage.
+ */
+export async function getProductGroup(options: GetProductGroupOptions): Promise<void> {
+  const { maxAttemptsPerUrl, status: priorAttempts, url, urlTableName } = options;
+
   // Mark the URL as visited
   await markUrlAsVisited(url, priorAttempts, urlTableName);
 
@@ -33,8 +37,8 @@ export async function getProductGroup(
       status = statusCode;
     } else {
       status = priorAttempts + 1;
-      if (status >= MAX_ATTEMPTS_PER_URL) {
-        status = statusCode || MAX_ATTEMPTS_PER_URL;
+      if (status >= maxAttemptsPerUrl) {
+        status = statusCode || maxAttemptsPerUrl;
       }
     }
     await setUrlStatus(url, priorAttempts, status, urlTableName);

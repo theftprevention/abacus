@@ -1,10 +1,9 @@
 import type { AttributeValue } from '@aws-sdk/client-dynamodb';
-import type { Product } from '../../core/classes/product';
-import type { ProductGroup } from '../../core/classes/productGroup';
-import type { KeyByValueType } from '../../core/types';
+import type { KeyByValueType } from '@abacus/common';
+import type { Product, ProductGroup } from '@abacus/core';
 
 import { DynamoDBClient, BatchWriteItemCommand } from '@aws-sdk/client-dynamodb';
-import { env } from '../../core/helpers/env';
+import { env } from '@abacus/common';
 
 const client = new DynamoDBClient();
 

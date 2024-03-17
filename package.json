@@ -2,10 +2,9 @@
   "name": "abacus",
   "version": "0.1.0",
   "scripts": {
-    "build": "npx ts-node bin/clear-layers.ts && npm run build-layers",
-    "build-layers": "npm run build-layer-jsdom && npm run build-layer-uuid",
-    "build-layer-jsdom": "mkdir \"bin/layers/jsdom/nodejs/node_modules\" && cd bin/layers/jsdom/nodejs && npm install jsdom@^24.0.0 --no-bin-links --omit=optional --no-package-lock --no-save",
-    "build-layer-uuid": "mkdir \"bin/layers/uuid/nodejs/node_modules\" && cd bin/layers/uuid/nodejs && npm install uuid@^8.3.2 --no-bin-links --omit=optional --no-package-lock --no-save",
+    "build": "npx ts-node bin/clear-layers.ts npm run build-abacus-layer && npm run build-vendor-layer",
+    "build-abacus-layer": "tsc --build",
+    "build-vendor-layer": "mkdir \"bin/layers/vendor/nodejs/node_modules\" && cd bin/layers/vendor/nodejs && npm install jsdom@^24.0.0 uuid@^8.3.2 --no-bin-links --omit=optional --no-package-lock --no-save",
     "crawl": "npx ts-node --prefer-ts-exts bin/crawl.ts",
     "deploy": "npm run synth && cdk deploy",
     "test": "jest",

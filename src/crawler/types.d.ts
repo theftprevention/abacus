@@ -1,23 +1,26 @@
-import type { HttpUrlString } from '../core/types';
-import type * as handlers from './index';
+import type { HttpUrlString } from '@abacus/common';
 
-export interface CrawlContext extends Omit<CrawlOptions, 'urlTableNamePrefix'> {
+export interface CrawlContext extends CrawlOptions {
   readonly urlTableName: string;
 }
 
 export interface CrawlOptions {
   readonly crawlId: string;
   readonly crawlName: string;
+  readonly maxAttemptsPerUrl: number;
+  readonly maxConcurrentUrls: number;
+  readonly maxUrls: number;
   readonly stateMachineArn: string;
+  readonly stateMachineUrlThreshold: number;
   readonly targetOrigin: HttpUrlString;
-  readonly urlTableNamePrefix: string;
 }
 
-export type HandlerName = {
-  [K in keyof typeof handlers]: (typeof handlers)[K] extends Function ? K : never;
-}[keyof typeof handlers];
-
-export type StepName = { [K in HandlerName]: K extends `${infer N}Handler` ? N : K }[HandlerName];
+export type StepName =
+  | 'beginCrawl'
+  | 'enqueueUrls'
+  | 'getProductGroup'
+  | 'nextExecution'
+  | 'stopCrawl';
 
 export interface HistoryEntry extends CrawlContext {
   batchUrlCount: number;

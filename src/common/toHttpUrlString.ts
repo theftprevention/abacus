@@ -1,4 +1,4 @@
-import type { HttpUrlString } from '../types';
+import type { HttpUrlString } from './types';
 
 export function toHttpUrlString(
   value: unknown,

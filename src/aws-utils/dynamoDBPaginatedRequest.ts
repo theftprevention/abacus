@@ -5,7 +5,7 @@ import type {
   ServiceOutputTypes,
 } from '@aws-sdk/client-dynamodb';
 import type { Command } from '@smithy/types';
-import type { ArrayElement } from '../types';
+import type { ArrayElement } from '@abacus/common';
 
 import { awsPaginatedRequest } from './awsPaginatedRequest';
 

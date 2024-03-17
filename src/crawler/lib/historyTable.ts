@@ -2,8 +2,8 @@ import type { AttributeValue } from '@aws-sdk/client-dynamodb';
 import type { HistoryEntry } from '../types';
 
 import { DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
-import { dynamoDBItemToObject } from '../../core/helpers/dynamoDBItemToObject';
-import { env } from '../../core/helpers/env';
+import { dynamoDBItemToObject } from '@abacus/aws-utils';
+import { env } from '@abacus/common';
 
 const HISTORY_TABLE_NAME = env('HISTORY_TABLE_NAME');
 

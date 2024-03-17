@@ -1,5 +1,5 @@
-import { toNonNegativeIntegerOrNull } from '../helpers/toNonNegativeIntegerOrNull';
-import { toStringOrNull } from '../helpers/toStringOrNull';
+import { toNonNegativeIntegerOrNull } from './toNonNegativeIntegerOrNull';
+import { toStringOrNull } from './toStringOrNull';
 
 export class HttpResponseError extends Error {
   constructor(statusCode: number | string | null | undefined, message?: string | null);

@@ -1,9 +1,9 @@
-import type { HttpUrlString } from '../types';
+import type { HttpUrlString } from './types';
 
 import { get as getHttp } from 'node:http';
 import { get as getHttps } from 'node:https';
 import { JSDOM } from 'jsdom';
-import { HttpResponseError } from '../classes/httpResponseError';
+import { HttpResponseError } from './httpResponseError';
 import { toStringOrNull } from './toStringOrNull';
 
 const htmlContentTypePattern = /^text\/html\b/i;
