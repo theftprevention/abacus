@@ -6,12 +6,13 @@ import {
   BatchWriteItemCommand,
   BillingMode,
   CreateTableCommand,
+  DeleteItemCommand,
   DeleteTableCommand,
   DynamoDBClient,
   KeyType,
+  PutItemCommand,
   ScalarAttributeType,
   ScanCommand,
-  UpdateItemCommand,
   waitUntilTableExists,
 } from '@aws-sdk/client-dynamodb';
 import { dynamoDBPaginatedRequest } from '@abacus/aws-utils';
@@ -91,18 +92,19 @@ export async function setUrlStatus(
   newStatus: number,
   urlTableName: string
 ): Promise<void> {
-  await client.send(new UpdateItemCommand({
+  await client.send(new DeleteItemCommand({
     TableName: urlTableName,
     Key: {
       status: { N: `${priorStatus}` },
       url: { S: String(url) },
     },
-    UpdateExpression: 'SET #status = :status',
-    ExpressionAttributeNames: {
-      '#status': 'status',
-    },
-    ExpressionAttributeValues: {
-      ':status': { N: `${newStatus}` },
+  }));
+
+  await client.send(new PutItemCommand({
+    TableName: urlTableName,
+    Item: {
+      status: { N: `${newStatus}` },
+      url: { S: String(url) },
     },
   }));
 }
