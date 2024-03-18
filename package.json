@@ -4,7 +4,7 @@
   "scripts": {
     "build": "ts-node bin/clear-layers.ts && npm run build-abacus-layer && npm run build-vendor-layer",
     "build-abacus-layer": "tsc --build",
-    "build-vendor-layer": "mkdir \"bin/layers/vendor/nodejs/node_modules\" && cd bin/layers/vendor/nodejs && npm install jsdom@^24.0.0 uuid@^8.3.2 --no-bin-links --omit=optional --no-package-lock --no-save",
+    "build-vendor-layer": "mkdir \"bin/layers/vendor/nodejs/node_modules\" && cd bin/layers/vendor/nodejs && npm install jsdom@^24.0.0 --no-bin-links --omit=optional --no-package-lock --no-save",
     "crawl": "ts-node --prefer-ts-exts bin/crawl.ts",
     "deploy": "npm run synth && cdk deploy",
     "test": "jest",
@@ -23,8 +23,7 @@
     "commander": "^12.0.0",
     "constructs": "^10.0.0",
     "jsdom": "^24.0.0",
-    "source-map-support": "^0.5.21",
-    "uuid": "^8.3.2"
+    "source-map-support": "^0.5.21"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

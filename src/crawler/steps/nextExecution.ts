@@ -22,7 +22,7 @@ export async function nextExecution(event: { Payload: { context: CrawlContext } 
 
   // Start a state machine execution to continue the crawl
   await sfnClient.send(new StartExecutionCommand({
-    name: `${context.crawlName}-continued-${sanitizeTimestamp()}`,
+    name: `${context.crawlId}-continued-${sanitizeTimestamp()}`,
     stateMachineArn: CRAWLER_STATE_MACHINE_ARN,
     input: JSON.stringify({
       Payload: { context },

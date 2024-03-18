@@ -1,7 +1,6 @@
 import type { CrawlContext, CrawlOptions } from '../types';
 
 import { SFNClient, StartExecutionCommand } from '@aws-sdk/client-sfn';
-import { v4 as uuid } from 'uuid';
 import {
   env,
   envInteger,
@@ -27,14 +26,11 @@ export async function beginCrawl(options: CrawlOptions) {
   if (!options || typeof options !== 'object') {
     options = Object.create(null) as NonNullable<typeof options>;
   }
-  const crawlId = toString(options.crawlId) || uuid();
-  const prefix = env('URL_TABLE_NAME_PREFIX');
-  const urlTableName = `${prefix}-${crawlId}`;
+  const crawlId = toString(options.crawlId) || sanitizeTimestamp();
+  const urlTableName = `${env('URL_TABLE_NAME_PREFIX')}-${crawlId}`;
 
   const context: CrawlContext = {
     crawlId,
-
-    crawlName: toString(options.crawlName) || `crawl-${sanitizeTimestamp()}`,
 
     maxAttemptsPerUrl:
       toNonNegativeIntegerOrNull(options.maxAttemptsPerUrl) ||
@@ -76,7 +72,7 @@ export async function beginCrawl(options: CrawlOptions) {
 
   // Start step function execution
   const response = await sfnClient.send(new StartExecutionCommand({
-    name: `${context.crawlName}-${sanitizeTimestamp(startTimestamp)}`,
+    name: `crawl-${crawlId}-${sanitizeTimestamp(startTimestamp)}`,
     stateMachineArn: CRAWLER_STATE_MACHINE_ARN,
     input: JSON.stringify({
       Payload: { context },

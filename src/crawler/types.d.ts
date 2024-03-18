@@ -6,7 +6,6 @@ export interface CrawlContext extends CrawlOptions {
 
 export interface CrawlOptions {
   readonly crawlId: string;
-  readonly crawlName: string;
   readonly maxAttemptsPerUrl: number;
   readonly maxConcurrentUrls: number;
   readonly maxUrls: number;

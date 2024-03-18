@@ -25,6 +25,7 @@ function optionToNonNegativeInteger(value: string): number {
 }
 
 const options = new Command()
+  .option('--crawl-id <id>', 'An identifier for this crawl')
   .addOption(
     new Option(
       '--max-attempts-per-url <count>',
@@ -54,7 +55,6 @@ const options = new Command()
       .default(null, 'no limit')
       .argParser(optionToNonNegativeInteger)
   )
-  .option('--name <name>', 'A name to identify this crawl')
   .option('--origin <origin>', 'The origin of the Virginia ABC website', VIRGINIA_ABC_ORIGIN)
   .addOption(
     new Option(
@@ -86,7 +86,7 @@ const lambdaClient = new LambdaClient();
 
   if (beginCrawlFunctionArn) {
     const crawlOptions: Partial<CrawlOptions> = {
-      crawlName: options.name,
+      crawlId: options.crawlId,
       maxAttemptsPerUrl: options.maxAttemptsPerUrl,
       maxConcurrentUrls: options.maxConcurrentUrls,
       maxUrls: options.maxUrls,

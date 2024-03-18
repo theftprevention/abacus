@@ -97,7 +97,7 @@ class CrawlerStack extends Stack {
 
       const defaultProps = {
         bundling: {
-          externalModules: ['@aws-sdk/*', 'jsdom', 'uuid', '@abacus/*'],
+          externalModules: ['@aws-sdk/*', 'jsdom', '@abacus/*'],
         },
         environment: {
           CRAWLER_STATE_MACHINE_ARN: stateMachineArn,

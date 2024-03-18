@@ -27,7 +27,6 @@ export async function putHistoryEntry(historyEntry: HistoryEntry): Promise<void>
   const item: { [K in keyof HistoryEntry]: AttributeValue } = {
     batchUrlCount: { N: `${historyEntry.batchUrlCount}` },
     crawlId: { S: historyEntry.crawlId, },
-    crawlName: { S: historyEntry.crawlName, },
     maxAttemptsPerUrl: { N: `${historyEntry.maxAttemptsPerUrl}` },
     maxConcurrentUrls: { N: `${historyEntry.maxConcurrentUrls}` },
     maxUrls: { N: `${historyEntry.maxUrls}` },
