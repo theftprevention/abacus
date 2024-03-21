@@ -1,1 +1,1 @@
-- Helper for converting a JavaScript object to a DynamoDB item
+- Merge the `abacus` and `vendor` layers into a single `crawler` layer

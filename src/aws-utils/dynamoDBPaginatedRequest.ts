@@ -5,7 +5,7 @@ import type {
   ServiceOutputTypes,
 } from '@aws-sdk/client-dynamodb';
 import type { Command } from '@smithy/types';
-import type { ArrayElement } from '@abacus/common';
+import type { AttributeValueMap } from './dynamodb-attributes';
 
 import { awsPaginatedRequest } from './awsPaginatedRequest';
 
@@ -23,13 +23,13 @@ export function dynamoDBPaginatedRequest<Input extends DynamoDBPaginatedRequestI
   command: DynamoDBPaginatedRequestCommand<Input>,
   inputTemplate: Input | ({} extends Input ? null | undefined : never),
   limit?: number | null
-): Promise<DynamoDBItem[]>;
+): Promise<AttributeValueMap[]>;
 export function dynamoDBPaginatedRequest(
   client: DynamoDBClient | (new () => DynamoDBClient),
   command: DynamoDBPaginatedRequestCommand,
   inputTemplate: DynamoDBPaginatedRequestInput,
   limit?: number | null
-): Promise<DynamoDBItem[]> {
+): Promise<AttributeValueMap[]> {
   return awsPaginatedRequest(
     client,
     command,
@@ -40,8 +40,6 @@ export function dynamoDBPaginatedRequest(
     limit
   );
 }
-
-type DynamoDBItem = ArrayElement<DynamoDBPaginatedRequestOutput[ResultListKey]>;
 
 interface DynamoDBPaginatedRequestCommand<
   Input extends DynamoDBPaginatedRequestInput = DynamoDBPaginatedRequestInput

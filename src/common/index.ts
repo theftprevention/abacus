@@ -4,6 +4,7 @@ export * from './classInstanceToJSON';
 export * from './env';
 export * from './envInteger';
 export * from './envOptional';
+export * from './hasOwnProperty';
 export * from './httpResponseError';
 export * from './loadHtmlDocument';
 export * from './sanitizeTimestamp';
