@@ -2,8 +2,11 @@
   "name": "abacus",
   "version": "0.1.0",
   "scripts": {
-    "build": "ts-node bin/clear-layers.ts && npm run build-crawler-layer",
-    "build-crawler-layer": "mkdir \"bin/layers/crawler/nodejs/node_modules\" && tsc --build && cd bin/layers/crawler/nodejs && npm install jsdom@^24.0.0 --no-bin-links --omit=optional --no-package-lock --no-save",
+    "build": "npm run clear-layers && npm run build-crawler-layer",
+    "build-crawler-layer": "npm run build-crawler-layer-vendor && npm run build-crawler-layer-local",
+    "build-crawler-layer-local": "tsc --build",
+    "build-crawler-layer-vendor": "mkdir \"bin/layers/crawler/nodejs/node_modules\" && cd bin/layers/crawler/nodejs && npm install jsdom@^24.0.0 --no-bin-links --omit=optional --no-package-lock --no-save",
+    "clear-layers": "ts-node bin/clear-layers.ts",
     "crawl": "ts-node --prefer-ts-exts bin/crawl.ts",
     "deploy": "npm run synth && cdk deploy",
     "test": "jest",
