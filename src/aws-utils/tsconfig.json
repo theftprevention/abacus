@@ -6,7 +6,7 @@
   ],
   "compilerOptions": {
     "composite": true,
-    "outDir": "../../bin/layers/abacus/nodejs/node_modules/@abacus/aws-utils",
+    "outDir": "../../bin/layers/crawler/nodejs/node_modules/@abacus/aws-utils",
     "rootDir": ".",
   },
   "references": [

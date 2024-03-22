@@ -82,18 +82,14 @@ class CrawlerStack extends Stack {
     });
 
     const stepLambda = (() => {
-      const layer = (id: string, path: string) => new LayerVersion(
+      const crawlerLayer = new LayerVersion(
         this,
-        id,
+        `${CONSTRUCT_NAME_PREFIX}CrawlerLayer`,
         {
-          code: Code.fromAsset(path),
+          code: Code.fromAsset('bin/layers/crawler'),
           compatibleRuntimes: [LAMBDA_RUNTIME],
         }
       );
-  
-      const abacusLayer = layer(`${CONSTRUCT_NAME_PREFIX}Layer`, 'bin/layers/abacus');
-  
-      const vendorLayer = layer('VendorLayer', 'bin/layers/vendor');
 
       const defaultProps = {
         bundling: {
@@ -112,7 +108,7 @@ class CrawlerStack extends Stack {
           S3_QUEUED_URLS_KEY,
           URL_TABLE_NAME_PREFIX,
         },
-        layers: [abacusLayer, vendorLayer],
+        layers: [crawlerLayer],
         memorySize: 512,
         runtime: LAMBDA_RUNTIME,
         timeout: Duration.minutes(3),
