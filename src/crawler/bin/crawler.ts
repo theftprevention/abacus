@@ -141,10 +141,10 @@ class CrawlerStack extends Stack {
     productTable.grantReadWriteData(getProductGroupLambda);
     getProductGroupLambda.addToRolePolicy(createUrlTablePolicy(['DeleteItem', 'GetItem', 'PutItem']));
 
-    // const getProductGroupAlias = getProductGroupLambda.addAlias('Provisioned', {
-    //   description: 'An alias of the "getProductGroup" lambda with provisioned concurrency.',
-    //   provisionedConcurrentExecutions: DEFAULT_MAX_CONCURRENT_URLS,
-    // });
+    const getProductGroupAlias = getProductGroupLambda.addAlias('Provisioned', {
+      description: 'An alias of the "getProductGroup" lambda with provisioned concurrency.',
+      provisionedConcurrentExecutions: Math.min(DEFAULT_MAX_CONCURRENT_URLS, 900),
+    });
 
     // When we've reached a certain queue size, we restart the step function execution so as not to breach the
     // execution history limit of 25000 steps
@@ -173,8 +173,7 @@ class CrawlerStack extends Stack {
       payload: TaskInput.fromJsonPathAt('$$.Execution.Input'),
     });
     const getProductGroup = new LambdaInvoke(this, 'GetProductGroup', {
-      lambdaFunction: getProductGroupLambda,
-      // lambdaFunction: getProductGroupAlias,
+      lambdaFunction: getProductGroupAlias,
     });
     const nextExecution = new LambdaInvoke(this, 'NextExecution', {
       lambdaFunction: nextExecutionLambda,
@@ -265,8 +264,7 @@ class CrawlerStack extends Stack {
     stateMachine.addToRolePolicy(new PolicyStatement({
       effect: Effect.ALLOW,
       actions: ["lambda:InvokeFunction"],
-      resources: [getProductGroupLambda.functionArn],
-      // resources: [getProductGroupLambda.functionArn, getProductGroupAlias.functionArn],
+      resources: [getProductGroupLambda.functionArn, getProductGroupAlias.functionArn],
     }));
   }
 }

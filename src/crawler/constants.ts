@@ -18,7 +18,7 @@ export const DEFAULT_MAX_ATTEMPTS_PER_URL = 3;
  * 
  * Note that this value must be greater than or equal to `DISTRIBUTED_MAP_CONCURRENCY_LIMIT`.
  */
-export const DEFAULT_MAX_CONCURRENT_URLS = 10;
+export const DEFAULT_MAX_CONCURRENT_URLS = 900;
 
 /**
  * The default maximum number of URLs to visit within a single state machine execution.
@@ -37,7 +37,7 @@ export const DEFAULT_STATE_MACHINE_URL_THRESHOLD = 10000;
  * child executions, you can request a quota increase for the Lambda concurrency limit and then
  * update the concurrency limit for the child executions of the Distributed Map state accordingly.
  */
-export const DISTRIBUTED_MAP_CONCURRENCY_LIMIT = 10;
+export const DISTRIBUTED_MAP_CONCURRENCY_LIMIT = 900;
 
 /**
  * The key of the file within the S3 bucket in which the enqueued URLs are stored.
