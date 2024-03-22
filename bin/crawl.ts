@@ -56,6 +56,7 @@ const options = new Command()
       .argParser(optionToNonNegativeInteger)
   )
   .option('--origin <origin>', 'The origin of the Virginia ABC website', VIRGINIA_ABC_ORIGIN)
+  .option('-p, --preserve-url-table', 'Preserve the URL table after the crawl instead of deleting it')
   .addOption(
     new Option(
       '--state-machine-url-threshold <count>',
@@ -90,6 +91,7 @@ const lambdaClient = new LambdaClient();
       maxAttemptsPerUrl: options.maxAttemptsPerUrl,
       maxConcurrentUrls: options.maxConcurrentUrls,
       maxUrls: options.maxUrls,
+      preserveUrlTable: !!options.preserveUrlTable,
       stateMachineUrlThreshold: options.stateMachineUrlThreshold,
       targetOrigin: options.origin,
     };

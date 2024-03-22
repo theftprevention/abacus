@@ -20,7 +20,9 @@ export async function stopCrawl(event: { Payload: { context: CrawlContext } }): 
   await s3Client.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: S3_QUEUED_URLS_KEY }));
 
   // Delete the URL tracking table
-  await deleteUrlTable(context);
+  if (!context.preserveUrlTable) {
+    await deleteUrlTable(context);
+  }
 
   // Update the end timestamp
   await updateHistoryEntry(context.crawlId, {

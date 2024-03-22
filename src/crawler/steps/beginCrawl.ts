@@ -44,6 +44,8 @@ export async function beginCrawl(options: CrawlOptions) {
 
     maxUrls: toNonNegativeIntegerOrNull(options.maxUrls) || Number.MAX_SAFE_INTEGER,
 
+    preserveUrlTable: !!options.preserveUrlTable,
+
     stateMachineUrlThreshold:
       toNonNegativeIntegerOrNull(options.stateMachineUrlThreshold) ||
       envInteger('DEFAULT_STATE_MACHINE_URL_THRESHOLD'),

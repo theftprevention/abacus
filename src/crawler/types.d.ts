@@ -9,6 +9,7 @@ export interface CrawlOptions {
   readonly maxAttemptsPerUrl: number;
   readonly maxConcurrentUrls: number;
   readonly maxUrls: number;
+  readonly preserveUrlTable: boolean;
   readonly stateMachineUrlThreshold: number;
   readonly targetOrigin: HttpUrlString;
 }
