@@ -17,7 +17,7 @@ export class Product {
     this.#group = group;
     if (properties && typeof properties === 'object') {
       for (const key of productPropertyKeys) {
-        if (key in properties) {
+        if (key !== 'url' && key in properties) {
           this[key] = properties[key];
         }
       }
