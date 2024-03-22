@@ -1,21 +1,23 @@
-import type { HttpUrlString } from '@abacus/common';
+import type { HttpResponseStatusCode, HttpUrlString } from '@abacus/common';
 
 import { HttpResponseError, loadHtmlDocument } from '@abacus/common';
 import { parseProductGroupFromDocument } from '@abacus/core';
 import { saveProductGroup } from '../lib/productTable';
 import { markUrlAsVisited, setUrlStatus } from '../lib/urlTable';
 
-interface GetProductGroupOptions {
-  maxAttemptsPerUrl: number;
-  status: number;
-  url: HttpUrlString;
-  urlTableName: string;
-}
+const socketHangUpPattern = /socket\s+hang\s+up/ig;
 
 /**
  * Extract the products from a single webpage.
  */
-export async function getProductGroup(options: GetProductGroupOptions): Promise<void> {
+export async function getProductGroup(
+  options: {
+    maxAttemptsPerUrl: number;
+    status: number;
+    url: HttpUrlString;
+    urlTableName: string;
+  }
+): Promise<void> {
   const { maxAttemptsPerUrl, status: priorAttempts, url, urlTableName } = options;
 
   // Mark the URL as visited
@@ -26,11 +28,14 @@ export async function getProductGroup(options: GetProductGroupOptions): Promise<
   try {
     document = await loadHtmlDocument(url);
   } catch (error) {
-    if (!(error instanceof HttpResponseError)) {
+    let statusCode: HttpResponseStatusCode | null | undefined;
+    if (error instanceof HttpResponseError) {
+      statusCode = error.statusCode;
+    } else if (!(error instanceof Error) || !socketHangUpPattern.test(error.message)) {
+      // Make sure we retry if `node:http` throws a "socket hang up" error
       throw error;
     }
     let status: number;
-    const { statusCode } = error;
     if (statusCode && statusCode >= 400 && statusCode < 500 && statusCode !== 408 && statusCode !== 429) {
       // A 4xx status code should not result in a retry unless it's either 408 (Request Timeout) or
       // 429 (Too Many Requests), both of which can be retried

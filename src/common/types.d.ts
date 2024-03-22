@@ -58,6 +58,13 @@ export type EmptyArray<T extends readonly unknown[] = []> = T extends readonly u
 
 export type Guid = `${string}-${string}-${string}-${string}-${string}`;
 
+export type HttpResponseStatusCode =
+  `${1 | 2 | 3 | 4 | 5}${0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9}${0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9}` extends (infer S)
+    ? S extends `${infer N extends number}`
+      ? N
+      : never
+    : never;
+
 export type HttpUrlString = `http${'' | 's'}://${string}`;
 
 export type KeyByValueType<T, V> = {
