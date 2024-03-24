@@ -15,6 +15,7 @@ import {
   Condition,
   DefinitionBody,
   DistributedMap,
+  Fail,
   LogLevel,
   ResultWriter,
   S3JsonItemReader,
@@ -167,21 +168,40 @@ export class CrawlerStack extends Stack {
       value: beginCrawlLambda.functionArn,
     });
 
+    const EXECUTION_INPUT_PATH = '$$.Execution.Input';
+
     const enqueueUrls = new LambdaInvoke(this, 'EnqueueUrls', {
       lambdaFunction: enqueueUrlsLambda,
-      payload: TaskInput.fromJsonPathAt('$$.Execution.Input'),
+      payload: TaskInput.fromJsonPathAt(EXECUTION_INPUT_PATH),
     });
     const getProductGroup = new LambdaInvoke(this, 'GetProductGroup', {
       lambdaFunction: getProductGroupAlias,
+      payload: TaskInput.fromObject({
+        context: TaskInput.fromJsonPathAt(EXECUTION_INPUT_PATH).value,
+        payload: TaskInput.fromJsonPathAt('$').value,
+      }),
     });
     const nextExecution = new LambdaInvoke(this, 'NextExecution', {
       lambdaFunction: nextExecutionLambda,
-      payload: TaskInput.fromJsonPathAt('$$.Execution.Input'),
+      payload: TaskInput.fromJsonPathAt(EXECUTION_INPUT_PATH),
     });
     const stopCrawl = new LambdaInvoke(this, 'StopCrawl', {
       lambdaFunction: stopCrawlLambda,
-      payload: TaskInput.fromJsonPathAt('$$.Execution.Input'),
+      payload: TaskInput.fromObject({
+        context: TaskInput.fromJsonPathAt(EXECUTION_INPUT_PATH).value,
+      }),
     });
+
+    const handleError = new LambdaInvoke(this, 'HandleError', {
+      lambdaFunction: stopCrawlLambda,
+      payload: TaskInput.fromObject({
+        context: TaskInput.fromJsonPathAt(EXECUTION_INPUT_PATH).value,
+        error: TaskInput.fromJsonPathAt('$').value,
+      }),
+    }).next(new Fail(this, 'Failed', {
+      causePath: '$.Payload.Cause',
+      errorPath: '$.Payload.Error',
+    }));
 
     const distributedMap = new DistributedMap(
         this,
@@ -216,29 +236,32 @@ export class CrawlerStack extends Stack {
       stateMachineName: CRAWLER_STATE_MACHINE_NAME,
       definitionBody: DefinitionBody.fromChainable(
         // Enqueue URLs from the database
-        // enqueueUrls.addCatch(enqueueUrls).next(
-        enqueueUrls.next(
-          // Check if we have urls still to visit
-          new Choice(this, 'QueueContainsUrls?')
-            .when(
-              booleanEquals('$.Payload.queueIsNonEmpty', true),
-              // Check if we have visited more urls than our threshold for a single state machine execution
-              new Choice(this, 'VisitedUrlsExceedsThreshold?')
-                .when(
-                  booleanEquals('$.Payload.thresholdExceeded', true),
-                  // Continue crawling in another state machine execution
-                  nextExecution.next(new Succeed(this, 'ContinuingInAnotherExecution'))
-                )
-                .otherwise(
-                  // Crawl every page we read from the queue in parallel
-                  distributedMap.next(enqueueUrls)
-                )
-            )
-            .otherwise(
-              // No urls in the queue, so we can complete the crawl
-              stopCrawl.next(new Succeed(this, 'Done'))
-            )
-        )
+        enqueueUrls
+          .addCatch(handleError)
+          .next(
+            // Check if we have urls still to visit
+            new Choice(this, 'QueueContainsUrls?')
+              .when(
+                booleanEquals('$.Payload.queueIsNonEmpty', true),
+                // Check if we have visited more urls than our threshold for a single state machine execution
+                new Choice(this, 'VisitedUrlsExceedsThreshold?')
+                  .when(
+                    booleanEquals('$.Payload.thresholdExceeded', true),
+                    // Continue crawling in another state machine execution
+                    nextExecution.next(new Succeed(this, 'ContinuingInAnotherExecution'))
+                  )
+                  .otherwise(
+                    // Crawl every page we read from the queue in parallel
+                    distributedMap
+                      .addCatch(handleError)
+                      .next(enqueueUrls)
+                  )
+              )
+              .otherwise(
+                // No urls in the queue, so we can complete the crawl
+                stopCrawl.next(new Succeed(this, 'Done'))
+              )
+          )
       ),
       logs: {
         level: LogLevel.ERROR,

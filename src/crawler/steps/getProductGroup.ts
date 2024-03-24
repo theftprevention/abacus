@@ -1,4 +1,5 @@
 import type { HttpResponseStatusCode, HttpUrlString } from '@abacus/common';
+import type { CrawlContext } from '../types';
 
 import { HttpResponseError, loadHtmlDocument } from '@abacus/common';
 import { parseProductGroupFromDocument } from '@abacus/core';
@@ -7,18 +8,24 @@ import { markUrlAsVisited, setUrlStatus } from '../lib/urlTable';
 
 const socketHangUpPattern = /socket\s+hang\s+up/ig;
 
+export interface GetProductGroupInput {
+  context: CrawlContext;
+  payload: GetProductGroupPayload;
+}
+
+export interface GetProductGroupPayload {
+  status: number;
+  url: HttpUrlString;
+}
+
 /**
  * Extract the products from a single webpage.
  */
-export async function getProductGroup(
-  options: {
-    maxAttemptsPerUrl: number;
-    status: number;
-    url: HttpUrlString;
-    urlTableName: string;
-  }
-): Promise<void> {
-  const { maxAttemptsPerUrl, status: priorAttempts, url, urlTableName } = options;
+export async function getProductGroup(input: GetProductGroupInput): Promise<void> {
+  const {
+    context: { maxAttemptsPerUrl, urlTableName },
+    payload: { status: priorAttempts, url },
+  } = input;
 
   // Mark the URL as visited
   await markUrlAsVisited(url, priorAttempts, urlTableName);

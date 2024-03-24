@@ -10,11 +10,19 @@ const S3_QUEUED_URLS_KEY = env('S3_QUEUED_URLS_KEY');
 
 const s3Client = new S3Client();
 
+export interface StopCrawlInput {
+  context: CrawlContext;
+  error?: {
+    Cause: string;
+    Error: string;
+  };
+}
+
 /**
  * When complete, clear the URL database and the working bucket.
  */
-export async function stopCrawl(event: { Payload: { context: CrawlContext } }): Promise<void> {
-  const { context } = event.Payload;
+export async function stopCrawl(input: StopCrawlInput) {
+  const { context } = input;
 
   // Delete the temporary queuedUrls file from the S3 working bucket
   await s3Client.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: S3_QUEUED_URLS_KEY }));
@@ -28,4 +36,6 @@ export async function stopCrawl(event: { Payload: { context: CrawlContext } }): 
   await updateHistoryEntry(context.crawlId, {
     endTimestamp: Date.now(),
   });
+
+  return input.error;
 }

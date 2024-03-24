@@ -12,9 +12,7 @@ const sfnClient = new SFNClient();
  * Responsible for continuing execution via another state machine execution if we're getting too
  * close to the maximum number of steps in our state machine execution.
  */
-export async function nextExecution(event: { Payload: { context: CrawlContext } }): Promise<void> {
-  const { context } = event.Payload;
-
+export async function nextExecution(context: CrawlContext): Promise<void> {
   // Reset batch count for next state machine execution
   await updateHistoryEntry(context.crawlId, {
     batchUrlCount: 0,

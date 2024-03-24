@@ -76,9 +76,7 @@ export async function beginCrawl(options: CrawlOptions) {
   const response = await sfnClient.send(new StartExecutionCommand({
     name: `crawl-${crawlId}-${sanitizeTimestamp(startTimestamp)}`,
     stateMachineArn: CRAWLER_STATE_MACHINE_ARN,
-    input: JSON.stringify({
-      Payload: { context },
-    }),
+    input: JSON.stringify(context),
   }));
 
   return { stateMachineExecutionArn: response.executionArn };

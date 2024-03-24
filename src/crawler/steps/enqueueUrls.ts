@@ -1,4 +1,5 @@
 import type { HttpUrlString } from '@abacus/common';
+import type { GetProductGroupPayload } from './getProductGroup';
 import type { CrawlContext } from '../types';
 
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
@@ -14,25 +15,18 @@ const s3Client = new S3Client();
 /**
  * Read all non visited urls from context table so that they can be passed to the crawl lambdas.
  */
-export async function enqueueUrls(event: { Payload: { context: CrawlContext } }) {
-  const { context } = event.Payload;
+export async function enqueueUrls(context: CrawlContext) {
   const historyEntry = await getHistoryEntry(context.crawlId);
   const {
     batchUrlCount: previousBatchUrlCount,
     urlCount: previousUrlCount,
   } = historyEntry;
-  const records: {
-    maxAttemptsPerUrl: number;
-    status: number;
-    url: HttpUrlString;
-    urlTableName: string;
-  }[] = [];
+  const records: GetProductGroupPayload[] = [];
 
   const remainingUrls = context.maxUrls - previousUrlCount;
   if (remainingUrls > 0) {
     // Get next batch of URLS to visit
     const items = await getBatchOfUnvisitedUrls(historyEntry);
-    const { maxAttemptsPerUrl, urlTableName } = context;
     let index = 0;
     let status: number | null;
     let url: HttpUrlString | null;
@@ -42,7 +36,7 @@ export async function enqueueUrls(event: { Payload: { context: CrawlContext } })
         (url = toHttpUrlStringOrNull(item.url?.S)) &&
         (status = toNonNegativeIntegerOrNull(item.status?.N)) != null
       ) {
-        records[index++] = { maxAttemptsPerUrl, status, url, urlTableName };
+        records[index++] = { status, url };
       }
     }
   }

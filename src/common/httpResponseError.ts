@@ -23,6 +23,10 @@ export class HttpResponseError extends Error {
     }
   }
 
+  get name(): string {
+    return 'HttpResponseError';
+  }
+
   #statusCode: HttpResponseStatusCode | null = null;
   get statusCode(): HttpResponseStatusCode | null {
     return this.#statusCode;
