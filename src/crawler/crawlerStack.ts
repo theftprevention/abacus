@@ -176,10 +176,6 @@ export class CrawlerStack extends Stack {
     });
     const getProductGroup = new LambdaInvoke(this, 'GetProductGroup', {
       lambdaFunction: getProductGroupAlias,
-      payload: TaskInput.fromObject({
-        context: TaskInput.fromJsonPathAt(EXECUTION_INPUT_PATH).value,
-        payload: TaskInput.fromJsonPathAt('$').value,
-      }),
     });
     const nextExecution = new LambdaInvoke(this, 'NextExecution', {
       lambdaFunction: nextExecutionLambda,

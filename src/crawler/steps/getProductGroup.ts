@@ -8,12 +8,7 @@ import { markUrlAsVisited, setUrlStatus } from '../lib/urlTable';
 
 const socketHangUpPattern = /socket\s+hang\s+up/ig;
 
-export interface GetProductGroupInput {
-  context: CrawlContext;
-  payload: GetProductGroupPayload;
-}
-
-export interface GetProductGroupPayload {
+export interface GetProductGroupInput extends Pick<CrawlContext, 'maxAttemptsPerUrl' | 'urlTableName'> {
   status: number;
   url: HttpUrlString;
 }
@@ -22,10 +17,7 @@ export interface GetProductGroupPayload {
  * Extract the products from a single webpage.
  */
 export async function getProductGroup(input: GetProductGroupInput): Promise<void> {
-  const {
-    context: { maxAttemptsPerUrl, urlTableName },
-    payload: { status: priorAttempts, url },
-  } = input;
+  const { maxAttemptsPerUrl, status: priorAttempts, url, urlTableName } = input;
 
   // Mark the URL as visited
   await markUrlAsVisited(url, priorAttempts, urlTableName);

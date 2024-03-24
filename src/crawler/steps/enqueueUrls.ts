@@ -1,5 +1,5 @@
 import type { HttpUrlString } from '@abacus/common';
-import type { GetProductGroupPayload } from './getProductGroup';
+import type { GetProductGroupInput } from './getProductGroup';
 import type { CrawlContext } from '../types';
 
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
@@ -16,12 +16,13 @@ const s3Client = new S3Client();
  * Read all non visited urls from context table so that they can be passed to the crawl lambdas.
  */
 export async function enqueueUrls(context: CrawlContext) {
+  const { maxAttemptsPerUrl, urlTableName } = context;
   const historyEntry = await getHistoryEntry(context.crawlId);
   const {
     batchUrlCount: previousBatchUrlCount,
     urlCount: previousUrlCount,
   } = historyEntry;
-  const records: GetProductGroupPayload[] = [];
+  const records: GetProductGroupInput[] = [];
 
   const remainingUrls = context.maxUrls - previousUrlCount;
   if (remainingUrls > 0) {
@@ -36,7 +37,7 @@ export async function enqueueUrls(context: CrawlContext) {
         (url = toHttpUrlStringOrNull(item.url?.S)) &&
         (status = toNonNegativeIntegerOrNull(item.status?.N)) != null
       ) {
-        records[index++] = { status, url };
+        records[index++] = { maxAttemptsPerUrl, status, url, urlTableName };
       }
     }
   }
