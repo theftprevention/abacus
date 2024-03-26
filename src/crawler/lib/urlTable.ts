@@ -1,6 +1,5 @@
-import type { AttributeValue } from '@aws-sdk/client-dynamodb';
 import type { HttpUrlString } from '@abacus/common';
-import type { CrawlContext, HistoryEntry } from '../types';
+import type { CrawlContext } from '../types';
 
 import {
   BatchWriteItemCommand,
@@ -12,10 +11,8 @@ import {
   KeyType,
   PutItemCommand,
   ScalarAttributeType,
-  ScanCommand,
   waitUntilTableExists,
 } from '@aws-sdk/client-dynamodb';
-import { dynamoDBPaginatedRequest } from '@abacus/aws-utils';
 
 const client = new DynamoDBClient();
 
@@ -52,30 +49,6 @@ export async function deleteUrlTable(context: CrawlContext): Promise<void> {
   await client.send(new DeleteTableCommand({
     TableName: context.urlTableName,
   }));
-}
-
-export async function getBatchOfUnvisitedUrls(
-  historyEntry: HistoryEntry
-): Promise<Record<string, AttributeValue>[]> {
-  const remainingUrls = historyEntry.maxUrls - historyEntry.urlCount;
-  const pageSize = Math.min(historyEntry.maxConcurrentUrls, remainingUrls);
-  return await dynamoDBPaginatedRequest(
-    client,
-    ScanCommand,
-    {
-      TableName: historyEntry.urlTableName,
-      FilterExpression: '#status < :maxattempts',
-      ExpressionAttributeNames: {
-        '#status': 'status',
-      },
-      ExpressionAttributeValues: {
-        ':maxattempts': { N: `${historyEntry.maxAttemptsPerUrl}` },
-      },
-      ConsistentRead: true,
-      Limit: Math.min(50, pageSize),
-    },
-    pageSize
-  );
 }
 
 export async function markUrlAsVisited(
