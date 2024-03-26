@@ -1,3 +1,4 @@
+import type { AttributeValueMap } from '@abacus/aws-utils';
 import type { HttpUrlString } from '@abacus/common';
 import type { CrawlContext } from '../types';
 
@@ -11,8 +12,10 @@ import {
   KeyType,
   PutItemCommand,
   ScalarAttributeType,
+  ScanCommand,
   waitUntilTableExists,
 } from '@aws-sdk/client-dynamodb';
+import { dynamoDBPaginatedRequest, toAttributeValue } from '@abacus/aws-utils';
 
 const client = new DynamoDBClient();
 
@@ -49,6 +52,30 @@ export async function deleteUrlTable(context: CrawlContext): Promise<void> {
   await client.send(new DeleteTableCommand({
     TableName: context.urlTableName,
   }));
+}
+
+export async function getBatchOfUnvisitedUrls(
+  context: CrawlContext,
+  remainingUrls: number
+): Promise<AttributeValueMap[]> {
+  const pageSize = Math.min(context.maxConcurrentUrls, remainingUrls);
+  return await dynamoDBPaginatedRequest(
+    client,
+    ScanCommand,
+    {
+      TableName: context.urlTableName,
+      FilterExpression: '#status = :status',
+      ExpressionAttributeNames: {
+        '#status': 'status',
+      },
+      ExpressionAttributeValues: {
+        ':status': toAttributeValue(null),
+      },
+      ConsistentRead: true,
+      Limit: Math.min(50, pageSize),
+    },
+    pageSize
+  );
 }
 
 export async function markUrlAsVisited(
