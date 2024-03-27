@@ -1,5 +1,4 @@
-import type { AttributeValueMap } from '@abacus/aws-utils';
-import type { HttpUrlString } from '@abacus/common';
+import type { HttpResponseStatusCode, HttpUrlString } from '@abacus/common';
 import type { CrawlContext } from '../types';
 
 import {
@@ -15,7 +14,23 @@ import {
   ScanCommand,
   waitUntilTableExists,
 } from '@aws-sdk/client-dynamodb';
-import { dynamoDBPaginatedRequest, toAttributeValue } from '@abacus/aws-utils';
+import {
+  dynamoDBPaginatedRequest,
+  parseAttributeValueMap,
+  toAttributeValueMap,
+} from '@abacus/aws-utils';
+
+export interface UrlEntry {
+  attempts: number;
+  history: UrlHistoryEntry[] | null;
+  status: HttpResponseStatusCode | null;
+  url: HttpUrlString;
+}
+
+export interface UrlHistoryEntry {
+  message: string;
+  timestamp: number;
+}
 
 const client = new DynamoDBClient();
 
@@ -28,7 +43,7 @@ export async function createUrlTable(tableName: string): Promise<void> {
         AttributeType: ScalarAttributeType.S,
       },
       {
-        AttributeName: 'status',
+        AttributeName: 'attempts',
         AttributeType: ScalarAttributeType.N,
       },
     ],
@@ -38,7 +53,7 @@ export async function createUrlTable(tableName: string): Promise<void> {
         KeyType: KeyType.HASH,
       },
       {
-        AttributeName: 'status',
+        AttributeName: 'attempts',
         KeyType: KeyType.RANGE,
       },
     ],
@@ -46,6 +61,13 @@ export async function createUrlTable(tableName: string): Promise<void> {
   }));
 
   await waitUntilTableExists({ client, maxWaitTime: 30, minDelay: 20 }, { TableName: tableName });
+}
+
+function deleteUrlRecord(url: HttpUrlString, attempts: number, urlTableName: string) {
+  return client.send(new DeleteItemCommand({
+    TableName: urlTableName,
+    Key: toAttributeValueMap({ url, attempts }),
+  }));
 }
 
 export async function deleteUrlTable(context: CrawlContext): Promise<void> {
@@ -57,59 +79,75 @@ export async function deleteUrlTable(context: CrawlContext): Promise<void> {
 export async function getBatchOfUnvisitedUrls(
   context: CrawlContext,
   remainingUrls: number
-): Promise<AttributeValueMap[]> {
+): Promise<UrlEntry[]> {
   const pageSize = Math.min(context.maxConcurrentUrls, remainingUrls);
-  return await dynamoDBPaginatedRequest(
+  const items = await dynamoDBPaginatedRequest(
     client,
     ScanCommand,
     {
       TableName: context.urlTableName,
-      FilterExpression: '#status = :status',
+      FilterExpression: '#attempts < :maxattempts',
       ExpressionAttributeNames: {
-        '#status': 'status',
+        '#attempts': 'attempts',
       },
-      ExpressionAttributeValues: {
-        ':status': toAttributeValue(null),
-      },
+      ExpressionAttributeValues: toAttributeValueMap({
+        ':maxattempts': context.maxAttemptsPerUrl,
+      }),
       ConsistentRead: true,
       Limit: Math.min(50, pageSize),
     },
     pageSize
   );
+  const entries: UrlEntry[] = [];
+  let index = 0;
+  for (const item of items) {
+    if (item && typeof item === 'object') {
+      entries[index++] = parseAttributeValueMap<UrlEntry>(item);
+    }
+  }
+  return entries;
 }
 
 export async function markUrlAsVisited(
-  url: URL | HttpUrlString,
-  priorStatus: number,
+  entry: Pick<UrlEntry, 'attempts' | 'url'> & Partial<Omit<UrlEntry, 'attempts' | 'url'>>,
   urlTableName: string
-) {
-  return setUrlStatus(url, priorStatus, 200, urlTableName);
+): Promise<void> {
+  await deleteUrlRecord(entry.url, entry.attempts, urlTableName);
 }
 
 export async function setUrlStatus(
-  url: URL | HttpUrlString,
-  priorStatus: number,
-  newStatus: number,
-  urlTableName: string
+  context: Pick<CrawlContext, 'maxAttemptsPerUrl' | 'urlTableName'>,
+  entry: Omit<UrlEntry, 'status'> & Partial<Pick<UrlEntry, 'status'>>,
+  status: HttpResponseStatusCode,
+  message?: string
 ): Promise<void> {
-  await client.send(new DeleteItemCommand({
-    TableName: urlTableName,
-    Key: {
-      status: { N: `${priorStatus}` },
-      url: { S: String(url) },
-    },
-  }));
+  const { urlTableName } = context;
+  const { attempts, history, url } = entry;
+
+  await deleteUrlRecord(url, attempts, urlTableName);
+
+  const historyEntry: UrlHistoryEntry = {
+    message: String(message || status),
+    timestamp: Date.now(),
+  };
 
   await client.send(new PutItemCommand({
     TableName: urlTableName,
-    Item: {
-      status: { N: `${newStatus}` },
-      url: { S: String(url) },
-    },
+    Item: toAttributeValueMap({
+      attempts: status >= 400 && status < 500 && status !== 408 && status !== 429
+        ? context.maxAttemptsPerUrl
+        : attempts + 1,
+      history: Array.isArray(history) ? [...history, historyEntry] : [historyEntry],
+      status,
+      url,
+    }),
   }));
 }
 
-export async function storeUrls(urls: readonly HttpUrlString[], urlTableName: string): Promise<void> {
+export async function storeUrls(
+  urls: readonly HttpUrlString[],
+  urlTableName: string
+): Promise<void> {
   let batch: HttpUrlString[];
   let batchSize: number;
   let index = 0;
@@ -121,10 +159,12 @@ export async function storeUrls(urls: readonly HttpUrlString[], urlTableName: st
         RequestItems: {
           [urlTableName]: batch.map((url) => ({
             PutRequest: {
-              Item: {
-                status: { N: '0' },
-                url: { S: url },
-              },
+              Item: toAttributeValueMap<UrlEntry>({
+                attempts: 0,
+                history: null,
+                status: null,
+                url,
+              }),
             },
           })),
         },

@@ -3,7 +3,7 @@ import type { GetProductGroupInput } from './getProductGroup';
 import type { CrawlContext } from '../types';
 
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { env, toHttpUrlStringOrNull, toNonNegativeIntegerOrNull } from '@abacus/common';
+import { env } from '@abacus/common';
 import { getHistoryEntry, putHistoryEntry } from '../lib/historyTable';
 import { getBatchOfUnvisitedUrls } from '../lib/urlTable';
 
@@ -29,15 +29,16 @@ export async function enqueueUrls(context: CrawlContext) {
     // Get next batch of URLS to visit
     const items = await getBatchOfUnvisitedUrls(context, remainingUrls);
     let index = 0;
-    let status: number | null;
     let url: HttpUrlString | null;
     for (const item of items) {
-      if (
-        item &&
-        (url = toHttpUrlStringOrNull(item.url?.S)) &&
-        (status = toNonNegativeIntegerOrNull(item.status?.N)) != null
-      ) {
-        records[index++] = { maxAttemptsPerUrl, status, url, urlTableName };
+      if (item && (url = item.url)) {
+        records[index++] = {
+          attempts: item.attempts,
+          history: item.history,
+          maxAttemptsPerUrl,
+          url,
+          urlTableName,
+        };
       }
     }
   }
