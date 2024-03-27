@@ -1,41 +1,29 @@
 import type { HttpUrlString } from '@abacus/common';
 
 import { request as initRequest } from 'node:https';
-import { HttpResponseError, toHttpUrlStringOrNull, toStringOrNull } from '@abacus/common';
+import {
+  HttpResponseError,
+  toHttpUrlStringOrNull,
+  toNonNegativeIntegerOrNull,
+  toStringOrNull,
+} from '@abacus/common';
 
-const searchPayloadDefaults = Object.freeze({
-  searchHub: 'ProductsSearchHub',
-  locale: 'en',
-  maximumAge: 900000,
-  numberOfResults: 800,
-  excerptLength: 0,
-  enableDidYouMean: false,
-  sortCriteria: '@productz32xlabelz32xname ascending',
-  queryFunctions: [],
-  rankingFunctions: [],
-  facetOptions: {},
-  categoryFacets: [],
-  retrieveFirstSentences: false,
-  timezone: 'America / New_York',
-  enableQuerySyntax: false,
-  enableDuplicateFiltering: false,
-  enableCollaborativeRating: false,
-  debug: false,
-  allowQueriesWithoutKeywords: true,
-});
+const RESULTS_PER_PAGE = 800;
 
 function getPageNumber(firstResult: number, totalCount: number | null): string {
-  const resultsPerPage = searchPayloadDefaults.numberOfResults;
-  const pageNumber = Math.floor(firstResult / resultsPerPage) + 1;
-  const totalPages = totalCount == null ? null : (Math.ceil(totalCount / resultsPerPage) || 1);
+  const pageNumber = Math.floor(firstResult / RESULTS_PER_PAGE) + 1;
+  const totalPages = totalCount == null ? null : (Math.ceil(totalCount / RESULTS_PER_PAGE) || 1);
   return `${pageNumber}${totalPages ? ` of ${totalPages}` : ''}`;
 }
 
 const jsonContentTypePattern = /^application\/json\b/i;
 
 export async function getProductGroupUrls(
-  origin: HttpUrlString
+  origin: HttpUrlString,
+  limit?: number
 ): Promise<HttpUrlString[]> {
+  limit = toNonNegativeIntegerOrNull(limit) || Number.POSITIVE_INFINITY;
+
   const searchEndpointUrl = new URL('coveo/rest/search/v2', origin);
   const { searchParams } = searchEndpointUrl;
   searchParams.set('sitecoreItemUri', 'sitecore://web/{C5781676-5EFD-4D25-8A54-723F2AC24ADC}?lang=en&amp;ver=80');
@@ -44,15 +32,37 @@ export async function getProductGroupUrls(
   const searchEndpoint = searchEndpointUrl.href;
   const urls = new Set<HttpUrlString>();
 
+  const searchPayloadDefaults = Object.freeze({
+    searchHub: 'ProductsSearchHub',
+    locale: 'en',
+    maximumAge: 900000,
+    excerptLength: 0,
+    enableDidYouMean: false,
+    sortCriteria: '@productz32xlabelz32xname ascending',
+    queryFunctions: [],
+    rankingFunctions: [],
+    facetOptions: {},
+    categoryFacets: [],
+    retrieveFirstSentences: false,
+    timezone: 'America / New_York',
+    enableQuerySyntax: false,
+    enableDuplicateFiltering: false,
+    enableCollaborativeRating: false,
+    debug: false,
+    allowQueriesWithoutKeywords: true,
+  });
+
   // Fetch list of products
+  let batchCount: number;
   let firstResult = 0;
+  let remainingUrls = limit;
   let totalCount: number | null = null;
   do {
-    console.log(`Fetching page ${getPageNumber(firstResult, totalCount)} of product URLs...`);
     const data = await new Promise<SearchResponseData>((resolve, reject) => {
       const payload = JSON.stringify({
         ...searchPayloadDefaults,
         firstResult,
+        numberOfResults: Math.min(RESULTS_PER_PAGE, remainingUrls),
       });
       const request = initRequest(
         searchEndpoint,
@@ -125,9 +135,11 @@ export async function getProductGroupUrls(
         urls.add(url);
       }
     }
-    firstResult += results.length;
+    batchCount = results.length;
+    firstResult += batchCount;
+    remainingUrls -= batchCount;
     totalCount = data.totalCount;
-  } while (firstResult < totalCount);
+  } while (firstResult < totalCount && remainingUrls > 0);
 
   return Array.from(urls);
 }

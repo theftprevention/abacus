@@ -27,6 +27,7 @@ export async function beginCrawl(options: CrawlOptions) {
     options = Object.create(null) as NonNullable<typeof options>;
   }
   const crawlId = toString(options.crawlId) || sanitizeTimestamp();
+  const maxUrls = toNonNegativeIntegerOrNull(options.maxUrls) || Number.MAX_SAFE_INTEGER;
   const urlTableName = `${env('URL_TABLE_NAME_PREFIX')}-${crawlId}`;
 
   const context: CrawlContext = {
@@ -42,7 +43,7 @@ export async function beginCrawl(options: CrawlOptions) {
       DISTRIBUTED_MAP_CONCURRENCY_LIMIT
     ),
 
-    maxUrls: toNonNegativeIntegerOrNull(options.maxUrls) || Number.MAX_SAFE_INTEGER,
+    maxUrls,
 
     preserveUrlTable: !!options.preserveUrlTable,
 
@@ -68,7 +69,7 @@ export async function beginCrawl(options: CrawlOptions) {
     urlCount: 0
   });
 
-  const productGroupUrls = await getProductGroupUrls(context.targetOrigin);
+  const productGroupUrls = await getProductGroupUrls(context.targetOrigin, maxUrls);
 
   await storeUrls(productGroupUrls, urlTableName);
 
