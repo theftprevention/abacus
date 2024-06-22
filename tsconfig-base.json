@@ -25,7 +25,8 @@
     "paths": {
       "@abacus/aws-utils": ["./src/aws-utils"],
       "@abacus/common": ["./src/common"],
-      "@abacus/core": ["./src/core"]
+      "@abacus/core": ["./src/core"],
+      "@abacus/crawler": ["./src/crawler"]
     }
   }
 }

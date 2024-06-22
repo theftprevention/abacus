@@ -4,7 +4,7 @@ import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { CrawlerStack } from '../src/crawler/crawlerStack';
 
 describe('CrawlerStack', () => {
-  it('synthesizes correctly', () => {
+  it('should synthesize correctly', () => {
     const app = new App();
 
     // Create the CrawlerStack.
