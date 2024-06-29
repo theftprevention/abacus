@@ -3,7 +3,7 @@ export function toStringArray(value: unknown): readonly string[] {
   if (value) {
     if (typeof value === 'string') {
       strings[0] = value;
-    } else {
+    } else if (typeof value === 'object') {
       let index = 0;
       let string: string;
       for (const item of (Array.isArray(value) ? value : Array.from(value as any)) as unknown[]) {
